@@ -15,5 +15,6 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 include "lib.lua"
 
 include "Engine"
+include "EngineDLL"
 include "PrimalEditor"
 include "EngineTest"
