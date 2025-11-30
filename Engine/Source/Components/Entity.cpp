@@ -72,7 +72,6 @@ namespace {
 	{
 		assert(is_valid());
 		const id::id_type index{ id::index(_id) };
-		assert(generations[index] == id::generation(_id));
 		return transforms[index];
 	}
 

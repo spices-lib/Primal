@@ -1,5 +1,7 @@
 #pragma once
 #include "ComponentsCommon.h"
+#include "EngineAPI/TransformComponent.h"
+#include "EngineAPI/GameEntity.h"
 
 namespace primal::transform {
 
@@ -11,6 +13,6 @@ namespace primal::transform {
 	};
 
 	component create_transform(const init_info& info, game_entity::entity entity);
-	void remove_transform(component id);
+	void remove_transform(component c);
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "ComponentsCommon.h"
-#include "Components/EngineAPI/GameEntity.h"
+#include "EngineAPI/GameEntity.h"
 
 namespace primal {
 

@@ -16,3 +16,4 @@ include "lib.lua"
 
 include "Engine"
 include "PrimalEditor"
+include "EngineTest"

@@ -6,5 +6,10 @@
 #include <assert.h>
 #include <typeinfo>
 
+#if defined(_WIN64)
+#include <DirectXMath.h>
+#endif
+
 #include "Utilities/Utilities.h"
 #include "PrimitiveTypes.h"
+#include "Utilities/MathTypes.h"
