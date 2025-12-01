@@ -1,5 +1,5 @@
 project "FirstGameProject"
-	kind "ConsoleApp"
+	kind "SharedLib"
 	language "C++"
 	cppdialect "C++20"
 	staticruntime "On"
@@ -67,6 +67,26 @@ project "FirstGameProject"
 
 		defines 
 		{
+		}
+
+		runtime "Release"
+		optimize "On"
+
+	filter "configurations:DebugWithEditor"
+
+		defines 
+		{
+			"USE_WITH_EDITOR"
+		}
+
+		runtime "Debug"
+		symbols "On"
+
+	filter "configurations:ReleaseWithEditor"
+
+		defines 
+		{
+			"USE_WITH_EDITOR"
 		}
 
 		runtime "Release"

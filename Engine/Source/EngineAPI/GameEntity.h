@@ -53,23 +53,46 @@ namespace script {
 
         u8 register_script(size_t, script_creator);
 
+#ifdef USE_WITH_EDITOR
+        extern "C" __declspec(dllexport)
+#endif
+        script_creator get_script_creator(size_t tag);
+
         template<class script_class>
         script_ptr create_script(game_entity::entity entity)
         {
             assert(entity.is_valid());
             return std::make_unique<script_class>(entity);
         }
+
+#ifdef USE_WITH_EDITOR
+        u8 add_script_name(const char* name);
+
+#define REGISTER_SCRIPT(TYPE)                                               \
+        namespace {                                                         \
+            const u8 _reg_##TYPE{ primal::script::detail::register_script(  \
+                primal::script::detail::string_hash()(#TYPE),               \
+                &primal::script::detail::create_script<TYPE>)               \
+            };                                                              \
+            const u8 _name_##TYPE{                                          \
+                primal::script::detail::add_script_name(#TYPE)              \
+            };                                                              \
+        }
+
     }
 
-#define REGISTER_SCRIPT(TYPE)                                           \
-    class TYPE;                                                         \
-                                                                        \
-    namespace {                                                         \
-                                                                        \
-        const u8 _reg##TYPE{ primal::script::detail::register_script(   \
-            primal::script::detail::string_hash()(#TYPE),               \
-            &primal::script::detail::create_script<TYPE>)               \
-        };                                                              \
+#else
+   
+#define REGISTER_SCRIPT(TYPE)                                               \
+        namespace {                                                         \
+            const u8 _reg_##TYPE{ primal::script::detail::register_script(  \
+                primal::script::detail::string_hash()(#TYPE),               \
+                &primal::script::detail::create_script<TYPE>)               \
+            };                                                              \
+        }
+
     }
+
+#endif
 }
 }

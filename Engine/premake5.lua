@@ -72,3 +72,23 @@ project "Engine"
 
 		runtime "Release"
 		optimize "On"
+
+	filter "configurations:DebugWithEditor"
+
+		defines 
+		{
+			"USE_WITH_EDITOR"
+		}
+
+		runtime "Debug"
+		symbols "On"
+
+	filter "configurations:ReleaseWithEditor"
+
+		defines 
+		{
+			"USE_WITH_EDITOR"
+		}
+
+		runtime "Release"
+		optimize "On"

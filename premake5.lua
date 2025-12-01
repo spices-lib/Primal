@@ -4,7 +4,9 @@ workspace "Primal"
 	configurations
 	{
 		"Debug",
+		"DebugWithEditor",
 		"Release",
+		"ReleaseWithEditor",
 	}
 
 	filter "system:windows"

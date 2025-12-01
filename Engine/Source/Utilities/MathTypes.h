@@ -4,7 +4,7 @@
 namespace primal::math {
 
 	constexpr float pi = 3.1415926535897f;
-	constexpr float epsilon = 0E-5;
+	constexpr float epsilon = 1E-5;
 
 #if defined(_WIN64)
 
