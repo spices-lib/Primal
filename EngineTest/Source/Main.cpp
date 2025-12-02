@@ -1,10 +1,12 @@
 #include <crtdbg.h>
 
+#define TEST_ENTITY_COMPONENTS 0
+#define TEST_WINDOW 1
 
-#define TEST_ENTITY_COMPONENTS 1
-#include "TestEntityComponents.h"
 #if TEST_ENTITY_COMPONENTS
-
+#include "TestEntityComponents.h"
+#elif TEST_WINDOW
+#include "TestWindows.h"
 #else
 #error One of the tests needs to be enabled
 #endif

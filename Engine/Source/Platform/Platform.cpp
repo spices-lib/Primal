@@ -211,6 +211,8 @@ namespace primal::platform {
 
 		if (info.hwnd)
 		{
+			SetLastError(0);
+
 			window_id id{ add_to_windows(info) };
 			SetWindowLongPtr(info.hwnd, GWLP_USERDATA, (LONG_PTR)id);
 
