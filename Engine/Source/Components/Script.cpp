@@ -110,6 +110,14 @@ namespace primal::script {
 		id_mapping[id::index(id)] = id::invalid_id;
 	}
 
+	void update(float dt)
+	{
+		for (auto& ptr : entity_scripts)
+		{
+			ptr->update(dt);
+		}
+	}
+
 }
 
 #ifdef USE_WITH_EDITOR
