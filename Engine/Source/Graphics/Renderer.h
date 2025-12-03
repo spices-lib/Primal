@@ -5,12 +5,12 @@
 namespace primal::graphics {
 
 	class surface
-	{
-	};
+	{};
 
 	struct render_surface
 	{
-		platform::window window;
+		platform::window window{};
+		surface surface{};
 	};
 
 }
