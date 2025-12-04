@@ -3,6 +3,19 @@
 
 namespace primal::tools {
 
+	namespace packed_vertex {
+
+		struct vertex_static
+		{
+			math::v3    position;
+			u8          reserved[3];
+			u8          t_sign;
+			u16         normal[2];
+			u16         tangent[2];
+			math::v2    uv;
+		};
+	}
+
 	struct vertex
 	{
 		math::v4 tangent{};
@@ -14,18 +27,22 @@ namespace primal::tools {
 	struct mesh
 	{
 		// Initial data
-		utl::vector<math::v3>               positions;
-		utl::vector<math::v3>               normals;
-		utl::vector<math::v3>               tangents;
-		utl::vector<utl::vector<math::v2>>  uv_sets;
-
-		utl::vector<u32>                    raw_indices;
-
-		// Intermediate data
-		utl::vector<vertex>                 vertices;
-		utl::vector<u32>                    indices;
-
-		// Output data
+		utl::vector<math::v3>                     positions;
+		utl::vector<math::v3>                     normals;
+		utl::vector<math::v3>                     tangents;
+		utl::vector<utl::vector<math::v2>>        uv_sets;
+											      
+		utl::vector<u32>                          raw_indices;
+											      
+		// Intermediate data				      
+		utl::vector<vertex>                       vertices;
+		utl::vector<u32>                          indices;
+											      
+		// Output data						      
+		std::string                               name;
+		utl::vector<packed_vertex::vertex_static> packed_vertices_static;
+		f32                                       lod_threshold{ -1.f };
+		u32                                       lod_id{ u32_invalid_id };
 	};
 
 	struct lod_group
