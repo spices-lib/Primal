@@ -13,10 +13,10 @@
 #include <DirectXMath.h>
 #endif
 
+#include "Utilities/Math.h"
 #include "Utilities/Utilities.h"
 #include "PrimitiveTypes.h"
 #include "Id.h"
-#include "Utilities/MathTypes.h"
 
 #ifdef _DEBUG
 #define DEBUG_OP(x) x
