@@ -1,8 +1,6 @@
-#include <crtdbg.h>
 
-#define TEST_ENTITY_COMPONENTS 0
-#define TEST_WINDOW 0
-#define TEST_RENDERER 1
+#include "Test.h"
+#include <crtdbg.h>
 
 #if TEST_ENTITY_COMPONENTS
 #include "TestEntityComponents.h"

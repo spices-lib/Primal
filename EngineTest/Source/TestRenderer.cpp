@@ -1,4 +1,7 @@
 #include "TestRenderer.h"
+
+#if TEST_RENDERER
+
 #include <Platform/Platform.h>
 #include <Platform/PlatformTypes.h>
 #include <Graphics/Renderer.h>
@@ -91,3 +94,5 @@ void engine_test::shutdown()
 
 	graphics::shutdown();
 }
+
+#endif
