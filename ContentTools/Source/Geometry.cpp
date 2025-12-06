@@ -134,6 +134,25 @@ namespace primal::tools {
 		void pack_vertices_static(mesh& m)
 		{
 			const u32 num_vertices{ (u32)m.vertices.size() };
+			assert(num_vertices);
+			m.packed_vertices_static.reserve(num_vertices);
+
+			for (u32 i{ 0 }; i < num_vertices; ++i)
+			{
+				vertex& v{ m.vertices[i] };
+				const u8 signs{ (u8)((v.normal.z > 0.0f) << 1) };
+				const u16 normal_x{ (u16)pack_float<16>(v.normal.x, -1.0f, 1.0f) };
+				const u16 normal_y{ (u16)pack_float<16>(v.normal.y, -1.0f, 1.0f) };
+
+				m.packed_vertices_static.emplace_back(packed_vertex::vertex_static
+				{
+					v.position, {0, 0, 0}, signs,
+					{ normal_x, normal_y }, {},
+					v.uv
+				});
+
+
+			}
 		}
 
 		void process_vertices(mesh& m, const geometry_import_settings& settings)
