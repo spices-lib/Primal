@@ -114,7 +114,7 @@ namespace primal::tools {
 					vertex& v{ old_vertices[old_indices[refs[j]]] };
 					v.uv = m.uv_sets[0][refs[j]];
 					m.vertices.emplace_back(v);
-
+					
 					for (u32 k{ j + 1 }; k < num_refs; ++k)
 					{
 						v2& uv1{ m.uv_sets[0][refs[k]] };

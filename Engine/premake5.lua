@@ -48,6 +48,8 @@ project "Engine"
 
 		links
 		{
+			"%{Library.dxgi}",
+			"%{Library.d3d12}",
 		}
 
 		buildoptions 
