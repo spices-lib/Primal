@@ -1,6 +1,7 @@
 #include "Common/CommonHeaders.h"
 #include "D3D12Interface.h"
 #include "Graphics/GraphicPlatformInterface.h"
+#include "D3D12Core.h"
 
 namespace primal::graphics::d3d12 {
 
