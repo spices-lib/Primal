@@ -12,7 +12,7 @@ namespace primal::graphics::d3d12::core {
 
 			d3d12_command() = default;
 
-			DISABLE_COPY_AND_MOVE(d3d12_command);
+			DISABLE_COPY(d3d12_command);
 
 			explicit d3d12_command(ID3D12Device8* const device, D3D12_COMMAND_LIST_TYPE type)
 			{
@@ -340,5 +340,10 @@ namespace primal::graphics::d3d12::core {
 
 
 		gfx_command.end_frame();
+	}
+
+	ID3D12Device* const device()
+	{
+		return main_device;
 	}
 }
