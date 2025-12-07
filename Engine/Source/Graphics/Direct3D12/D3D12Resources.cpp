@@ -43,6 +43,11 @@ namespace primal::graphics::d3d12 {
 		{
 			_free_handles[i] = i;
 		}
+		for (u32 i{ 0 }; i < frame_buffer_count; ++i)
+		{
+			_deferred_free_indices[i].clear();
+		}
+		DEBUG_OP(for (u32 i{ 0 }; i < frame_buffer_count; ++i) assert(_deferred_free_indices[i].empty()));
 
 		_descriptor_size = device->GetDescriptorHandleIncrementSize(_type);
 		_cpu_start = _heap->GetCPUDescriptorHandleForHeapStart();
@@ -55,7 +60,25 @@ namespace primal::graphics::d3d12 {
 
 	void descriptor_heap::release()
 	{
+		assert(!_size);
+		core::deferred_release(_heap);
+	}
 
+	void descriptor_heap::process_deferred_free(u32 frame_idx)
+	{
+		std::unique_lock lock(_mutex);
+		assert(frame_idx < frame_buffer_count);
+
+		utl::vector<u32>& indices{ _deferred_free_indices[frame_idx] };
+		if (!indices.empty())
+		{
+			for (auto index : indices)
+			{
+				--_size;
+				_free_handles[_size] = index;
+			}
+			indices.clear();
+		}
 	}
 
 	descriptor_handle descriptor_heap::allocate()
@@ -97,6 +120,9 @@ namespace primal::graphics::d3d12 {
 		const u32 index{ (u32)(handle.cpu.ptr - _cpu_start.ptr) / _descriptor_size };
 		assert(handle.index == index);
 
+		const u32 frame_index{ core::current_frame_index() };
+		_deferred_free_indices[frame_index].push_back(index);
+		core::set_deferred_release_flag();
 		handle = {};
 	}
 
