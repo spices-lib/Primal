@@ -1,6 +1,7 @@
 #pragma once
 #include "Common/CommonHeaders.h"
 #include "Graphics/Renderer.h"
+#include "Platform/Windows.h"
 
 #include <dxgi1_6.h>
 #include <d3d12.h>
