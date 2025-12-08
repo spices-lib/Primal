@@ -22,25 +22,30 @@ namespace primal::graphics::d3d12 {
 		assert(factory && cmd_queue);
 		release();
 
+		if (SUCCEEDED(factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &_allow_tearing, sizeof(u32))) && _allow_tearing)
+		{
+			_present_flags = DXGI_PRESENT_ALLOW_TEARING;
+		}
+
 		DXGI_SWAP_CHAIN_DESC1 desc{};
 		desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 		desc.BufferCount = frame_buffer_count;
 		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		desc.Flags = 0;
+		desc.Flags = _allow_tearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 		desc.Format = to_non_srgb(format);
 		desc.Height = _window.height();
 		desc.Width = _window.width();
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Scaling = DXGI_SCALING_STRETCH;
-		desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		desc.Stereo = false;
 
 		IDXGISwapChain1* swap_chain;
 		HWND hwnd{ (HWND)_window.handle() };
 		DXCall(factory->CreateSwapChainForHwnd(cmd_queue, hwnd, &desc, nullptr, nullptr, &swap_chain));
 		DXCall(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
-		DXCall(swap_chain->QueryInterface(IID_PPV_ARGS(&swap_chain)));
+		DXCall(swap_chain->QueryInterface(IID_PPV_ARGS(&_swap_chain)));
 		core::release(swap_chain);
 
 		_current_bb_index = _swap_chain->GetCurrentBackBufferIndex();
@@ -56,11 +61,11 @@ namespace primal::graphics::d3d12 {
 	void d3d12_surface::present() const
 	{
 		assert(_swap_chain);
-		DXCall(_swap_chain->Present(0, 0));
+		DXCall(_swap_chain->Present(0, _present_flags));
 		_current_bb_index = _swap_chain->GetCurrentBackBufferIndex();
 	}
 
-	void resize()
+	void d3d12_surface::resize()
 	{
 
 	}
