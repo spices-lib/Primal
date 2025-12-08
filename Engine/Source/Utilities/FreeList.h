@@ -97,9 +97,9 @@ namespace primal::utl {
 			}
 		}
 
-		utl::vector<T>    _array;
-		u32               _next_free_index{ u32_invalid_id };
-		u32               _size{ 0 };
+		utl::vector<T, false>    _array;
+		u32                      _next_free_index{ u32_invalid_id };
+		u32                      _size{ 0 };
 	};
 
 }
