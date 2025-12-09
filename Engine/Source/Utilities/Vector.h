@@ -95,9 +95,9 @@ namespace primal::utl {
 			}
 			assert(_size < _capacity);
 
-			new (std::addressof(_data[_size])) T(std::forward<params>(p)...);
+			T* const item{ new (std::addressof(_data[_size])) T(std::forward<params>(p)...) };
 			++_size;
-			return _data[_size - 1];
+			return *item;
 		}
 
 		constexpr void resize(u64 new_size)
@@ -118,6 +118,8 @@ namespace primal::utl {
 				{
 					destruct_range(new_size, _size);
 				}
+
+				_size = new_size;
 			}
 
 			assert(new_size == _size);
@@ -141,6 +143,8 @@ namespace primal::utl {
 				{
 					destruct_range(new_size, _size);
 				}
+
+				_size = new_size;
 			}
 
 			assert(new_size == _size);
@@ -223,9 +227,9 @@ namespace primal::utl {
 		{
 			if (this != std::addressof(o))
 			{
-				auto temp(o);
-				o = *this;
-				*this = temp;
+				auto temp(std::move(o));
+				o.move(*this);
+				move(temp);
 			}
 		}
 
