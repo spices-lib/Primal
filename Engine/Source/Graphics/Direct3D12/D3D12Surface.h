@@ -44,6 +44,10 @@ namespace primal::graphics::d3d12 {
 			return *this;
 		}
 
+#else
+
+		DISABLE_COPY(d3d12_surface);
+
 #endif
 
 		~d3d12_surface() { release(); }
