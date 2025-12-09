@@ -1,12 +1,14 @@
 #include "D3D12Core.h"
 #include "D3D12Resources.h"
 #include "D3D12Surface.h"
+#include "D3D12Healpers.h"
 
 using namespace Microsoft::WRL;
 
 namespace primal::graphics::d3d12::core {
 
 	void create_a_root_signature();
+	void create_a_root_signature2();
 
 	namespace {
 	
@@ -371,6 +373,7 @@ namespace primal::graphics::d3d12::core {
 		NAME_D3D12_OBJECT(uav_desc_heap.heap(), L"UAV Descriptor Heap");
 
 		create_a_root_signature();
+		create_a_root_signature2();
 
 		return true;
 	}
@@ -586,5 +589,40 @@ namespace primal::graphics::d3d12::core {
 		release(error_blob);
 
 		release(root_sig);
+	}
+
+	void create_a_root_signature2()
+	{
+		d3dx::d3d12_descriptor_range range{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND, 0 };
+		d3dx::d3d12_root_parameter params[3];
+		params[0].as_constants(2, D3D12_SHADER_VISIBILITY_PIXEL, 0);
+		params[1].as_cbv(D3D12_SHADER_VISIBILITY_PIXEL, 1);
+		params[2].as_descriptor_table(D3D12_SHADER_VISIBILITY_PIXEL, &range, 1);
+
+		d3dx::d3d12_root_signature_desc root_sig_desc{ &params[0], _countof(params) };
+		ID3D12RootSignature* root_sig{ root_sig_desc.create() };
+
+#if 0
+		ID3D12GraphicsCommandList6* cmd_list{};
+		cmd_list->SetGraphicsRootSignature(root_sig);
+		ID3D12DescriptorHeap* heaps[]{ srv_heap().heap() };
+		cmd_list->SetDescriptorHeaps(1, &heaps[0]);
+
+		float dt{ 16.6f };
+		u32 dt_uint{ *((u32*)&dt) };
+		u32 frame_nr{ 4287827 };
+		D3D12_GPU_VIRTUAL_ADDRESS address_of_constant_buffer{};
+		cmd_list->SetGraphicsRoot32BitConstant(0, dt_uint, 0);
+		cmd_list->SetGraphicsRoot32BitConstant(0, frame_nr, 1);
+		cmd_list->SetGraphicsRootConstantBufferView(1, address_of_constant_buffer);
+		cmd_list->SetGraphicsRootDescriptorTable(2, srv_heap().gpu_start());
+#endif
+
+		release(root_sig);
+	}
+
+	void create_a_pipeline_state_object()
+	{
+
 	}
 }
