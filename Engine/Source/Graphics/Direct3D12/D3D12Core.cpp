@@ -419,7 +419,7 @@ namespace primal::graphics::d3d12::core {
 		release(main_device);
 	}
 
-	ID3D12Device* const device()
+	ID3D12Device8* const device()
 	{
 		return main_device;
 	}
@@ -621,8 +621,48 @@ namespace primal::graphics::d3d12::core {
 		release(root_sig);
 	}
 
+	ID3D12RootSignature* _root_signature;
+	D3D12_SHADER_BYTECODE _vs{};
+
+
+
+	
 	void create_a_pipeline_state_object()
 	{
+		struct {
+			struct alignas(void*) {
+				const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE };
+				ID3D12RootSignature* root_signature;
+			} root_sig;
+			struct alignas(void*) {
+				const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type{ D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS };
+				D3D12_SHADER_BYTECODE vs_code{};
+			} vs;
+		} stream;
 
+		stream.root_sig.root_signature = _root_signature;
+		stream.vs.vs_code = _vs;
+
+		D3D12_PIPELINE_STATE_STREAM_DESC desc{};
+		desc.pPipelineStateSubobjectStream = &stream;
+		desc.SizeInBytes = sizeof(stream);
+
+		ID3D12PipelineState* pso{ nullptr };
+
+		device()->CreatePipelineState(&desc, IID_PPV_ARGS(&pso));
+
+		release(pso);
+	}
+
+	void create_a_pipeline_state_object2()
+	{
+		struct {
+			d3dx::d3d12_pipeline_state_subobject_root_signature root_sig{ _root_signature };
+			d3dx::d3d12_pipeline_state_subobject_vs vs{ _vs };
+		} stream;
+
+		auto pso = d3dx::create_pipeline_state(&stream, sizeof(stream));
+
+		release(pso);
 	}
 }
