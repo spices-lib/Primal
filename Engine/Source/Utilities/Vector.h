@@ -25,15 +25,6 @@ namespace primal::utl {
 			resize(count, value);
 		}
 
-		template<typename it, typename = std::enable_if_t<std::_Is_iterator_v<it>>>
-		constexpr explicit vector(it first, it last)
-		{
-			for (; first != last; ++first)
-			{
-				emplace_back(*first);
-			}
-		}
-
 		constexpr vector(const vector& o)
 		{
 			*this = o;
