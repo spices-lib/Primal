@@ -25,12 +25,19 @@ project "EngineTest"
 	includedirs
 	{
 		"Source",
-		"%{IncludeDir.Engine}"
+		"%{IncludeDir.Engine}",
+		"%{IncludeDir.DirectXShaderCompiler}"
 	}
 
 	links
 	{
-		"Engine"
+		"Engine",
+		"%{Library.DirectXShaderCompiler}",
+	}
+
+	debugenvs 
+	{
+		"PATH=%{LibraryDir.DirectXShaderCompiler}",     
 	}
 
 	filter "system:windows"
