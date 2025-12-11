@@ -44,6 +44,11 @@ namespace primal::graphics {
 		return engine_shader_paths[(u32)gfx.platform];
 	}
 
+	const char* get_engine_shaders_path(graphics_platform platform)
+	{
+		return engine_shader_paths[(u32)platform];
+	}
+
 	surface create_surface(platform::window window)
 	{
 		return gfx.surface.create(window);
