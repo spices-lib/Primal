@@ -1,6 +1,5 @@
 #include "D3D12Resources.h"
 #include "D3D12Core.h"
-#include "D3D12Healpers.h"
 
 namespace primal::graphics::d3d12 {
 

@@ -21,7 +21,8 @@ namespace primal::graphics::d3d12::shaders {
 
 	struct engine_shader {
 		enum id : u32 {
-			full_screen_triangle,
+			full_screen_triangle_vs,
+			fill_color_ps = 1,
 
 			count
 		};

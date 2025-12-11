@@ -9,4 +9,6 @@
 *.csproj
 *.vcxproj.filters
 
+EngineTest/shaders
+
 *.log

@@ -19,7 +19,7 @@ namespace primal::graphics::d3d12::shaders {
 		{
 			assert(!shaders_blob);
 			u64 size{ 0 };
-			bool result{ !content::load_engine_shaders(shaders_blob, size) };
+			bool result{ content::load_engine_shaders(shaders_blob, size) };
 			assert(shaders_blob && size);
 
 			u64 offset{ 0 };
