@@ -1,6 +1,7 @@
 #include "D3D12Core.h"
 #include "D3D12Surface.h"
 #include "D3D12Shaders.h"
+#include "D3D12GPass.h"
 
 using namespace Microsoft::WRL;
 
@@ -361,7 +362,7 @@ namespace primal::graphics::d3d12::core {
 			return failed_init();
 		}
 
-		if (!shaders::initialize())
+		if (!shaders::initialize() && gpass::initialize())
 		{
 			return failed_init();
 		}
@@ -384,6 +385,7 @@ namespace primal::graphics::d3d12::core {
 			process_deferred_releases(i);
 		}
 
+		gpass::shutdown();
 		shaders::shutdown();
 
 		release(dxgi_factory);

@@ -3,6 +3,8 @@
 #include "Graphics/Renderer.h"
 #include "Platform/Windows.h"
 
+#define NOMINMAX
+
 #include <dxgi1_6.h>
 #include <d3d12.h>
 #include <wrl.h>

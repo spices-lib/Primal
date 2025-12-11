@@ -130,7 +130,7 @@ namespace {
 
 	private:
 
-		const char* _profile_strings[shader_type::count]{ "vs_6_5", "hs_6_5", "ds_6_5", "gs_6_5", "ps_6_5", "cs_6_5", "as_6_5", "ms_6_5" };
+		constexpr static const char* _profile_strings[shader_type::count]{ "vs_6_5", "hs_6_5", "ds_6_5", "gs_6_5", "ps_6_5", "cs_6_5", "as_6_5", "ms_6_5" };
 		static_assert(_countof(_profile_strings) == shader_type::count);
 
 		ComPtr<IDxcCompiler3>        _compiler{ nullptr };
