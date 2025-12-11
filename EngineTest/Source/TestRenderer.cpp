@@ -1,4 +1,5 @@
 #include "TestRenderer.h"
+#include "ShaderCompilation.h"
 
 #if TEST_RENDERER
 
@@ -81,6 +82,14 @@ void destroy_render_surface(graphics::render_surface& surface)
 
 bool engine_test::initialize()
 {
+	while (!compile_shaders())
+	{
+		if (MessageBox(nullptr, L"Failed to compile engine shaders.", L"Shader Compilation Error", MB_RETRYCANCEL) != IDRETRY)
+		{
+			return false;
+		}
+	}
+
 	bool result{ graphics::initialize(graphics::graphics_platform::direct3d12) };
 	if (!result)
 	{

@@ -6,6 +6,11 @@ namespace primal::graphics {
 
 	namespace {
 	
+		constexpr const char* engine_shader_paths[]{
+			"./shaders/d3d12/shaders.bin",
+
+		};
+
 		platform_interface gfx{};
 	
 		bool set_platform_interface(graphics_platform platform)
@@ -19,6 +24,7 @@ namespace primal::graphics {
 				return false;
 			}
 
+			assert(gfx.platform == platform);
 			return true;
 		}
 	}
@@ -31,6 +37,11 @@ namespace primal::graphics {
 	void shutdown()
 	{
 		gfx.shutdown();
+	}
+
+	const char* get_engine_shaders_path()
+	{
+		return engine_shader_paths[(u32)gfx.platform];
 	}
 
 	surface create_surface(platform::window window)
