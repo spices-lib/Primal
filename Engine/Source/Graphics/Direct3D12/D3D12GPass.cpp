@@ -148,5 +148,28 @@ namespace primal::graphics::d3d12::gpass {
 	{
 		cmd_list->SetGraphicsRootSignature(gpass_root_sig);
 		cmd_list->SetPipelineState(gpass_pso);
+
+		static u32 frame{ 0 };
+		++frame;
+		cmd_list->SetGraphicsRoot32BitConstant(0, frame, 0);
+
+		cmd_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		cmd_list->DrawInstanced(3, 1, 0, 0);
+	}
+
+	void set_render_targets_for_depth_prepass(id3d12_graphic_command_list* cmd_list)
+	{
+		const D3D12_CPU_DESCRIPTOR_HANDLE dsv{ gpass_depth_buffer.dsv() };
+		cmd_list->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 0.0f, 0, 0, nullptr);
+		cmd_list->OMSetRenderTargets(0, nullptr, 0, &dsv);
+	}
+
+	void set_render_targets_for_gpass(id3d12_graphic_command_list* cmd_list)
+	{
+		const D3D12_CPU_DESCRIPTOR_HANDLE rtv{ gpass_main_buffer.rtv(0) };
+		const D3D12_CPU_DESCRIPTOR_HANDLE dsv{ gpass_depth_buffer.dsv() };
+
+		cmd_list->ClearRenderTargetView(rtv, clear_value, 0, nullptr);
+		cmd_list->OMSetRenderTargets(1, &rtv, 0, &dsv);
 	}
 }

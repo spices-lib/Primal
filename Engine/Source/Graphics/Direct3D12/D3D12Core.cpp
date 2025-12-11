@@ -502,6 +502,10 @@ namespace primal::graphics::d3d12::core {
 		}
 
 		const d3d12_surface& surface{ surfaces[id] };
+
+		d3d12_frame_info info;
+		gpass::set_size({ surface.width(), surface.height() });
+
 		surface.present();
 
 		gfx_command.end_frame();
