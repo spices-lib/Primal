@@ -25,7 +25,8 @@ project "ContentTools"
 	includedirs
 	{
 		"Source",
-		"%{IncludeDir.Engine}"
+		"%{IncludeDir.Engine}",
+		"%{IncludeDir.FBX}"
 	}
 
 	links
@@ -60,6 +61,13 @@ project "ContentTools"
 		{
 		}
 
+		links
+		{
+			"%{Library.FBX_Debug_fbx}",
+			"%{Library.FBX_Debug_xml}",
+			"%{Library.FBX_Debug_zlib}",
+		}
+
 		runtime "Debug"
 		symbols "On"
 
@@ -67,6 +75,13 @@ project "ContentTools"
 
 		defines 
 		{
+		}
+
+		links
+		{
+			"%{Library.FBX_Release_fbx}",
+			"%{Library.FBX_Release_xml}",
+			"%{Library.FBX_Release_zlib}",
 		}
 
 		runtime "Release"
