@@ -2,6 +2,7 @@
 #include "D3D12Surface.h"
 #include "D3D12Shaders.h"
 #include "D3D12GPass.h"
+#include "D3D12PostProcess.h"
 
 using namespace Microsoft::WRL;
 
@@ -366,7 +367,7 @@ namespace primal::graphics::d3d12::core {
 			return failed_init();
 		}
 
-		if (!shaders::initialize() && gpass::initialize())
+		if (!shaders::initialize() || !gpass::initialize() || !fx::initialize())
 		{
 			return failed_init();
 		}
@@ -389,6 +390,7 @@ namespace primal::graphics::d3d12::core {
 			process_deferred_releases(i);
 		}
 
+		fx::shutdown();
 		gpass::shutdown();
 		shaders::shutdown();
 
@@ -517,6 +519,9 @@ namespace primal::graphics::d3d12::core {
 		gpass::set_size({ frame_info.surface_width, frame_info.surface_height });
 		d3dx::d3d12_resource_barrier& barriers{ resource_barriers };
 
+		ID3D12DescriptorHeap* const heaps[]{ srv_desc_heap.heap() };
+		cmd_list->SetDescriptorHeaps(1, &heaps[0]);
+
 		cmd_list->RSSetViewports(1, &surface.viewport());
 		cmd_list->RSSetScissorRects(1, &surface.scissor_rect());
 
@@ -542,6 +547,7 @@ namespace primal::graphics::d3d12::core {
 		// post pass
 		gpass::add_transitions_for_post_process(barriers);
 		barriers.apply(cmd_list);
+		fx::post_process(cmd_list, surface.rtv());
 
 		d3dx::transition_resource(
 			cmd_list,

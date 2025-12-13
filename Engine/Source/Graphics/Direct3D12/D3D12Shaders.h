@@ -23,6 +23,7 @@ namespace primal::graphics::d3d12::shaders {
 		enum id : u32 {
 			full_screen_triangle_vs,
 			fill_color_ps = 1,
+			post_process_ps = 2,
 
 			count
 		};

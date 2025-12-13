@@ -52,6 +52,8 @@ namespace primal::graphics::d3d12::shaders {
 		{
 			engine_shaders[i] = {};
 		}
+
+		shaders_blob.reset();
 	}
 
 	D3D12_SHADER_BYTECODE get_engine_shader(engine_shader::id id)
