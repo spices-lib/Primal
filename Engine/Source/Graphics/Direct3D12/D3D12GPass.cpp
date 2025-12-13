@@ -14,21 +14,21 @@ namespace primal::graphics::d3d12::gpass {
 			};
 		};
 
-		constexpr DXGI_FORMAT   main_buffer_format{ DXGI_FORMAT_R16G16B16A16_FLOAT };
-		constexpr DXGI_FORMAT   depth_buffer_format{ DXGI_FORMAT_D32_FLOAT };
-		constexpr math::u32v2   initial_dimensions{ 100, 100 };
-
-		d3d12_render_texture    gpass_main_buffer{};
-		d3d12_depth_buffer      gpass_depth_buffer{};
-		math::u32v2             dimensions{ initial_dimensions };
-
-		ID3D12RootSignature*    gpass_root_sig{ nullptr };
-		ID3D12PipelineState*    gpass_pso{ nullptr };
+		constexpr DXGI_FORMAT            main_buffer_format{ DXGI_FORMAT_R16G16B16A16_FLOAT };
+		constexpr DXGI_FORMAT            depth_buffer_format{ DXGI_FORMAT_D32_FLOAT };
+		constexpr math::u32v2            initial_dimensions{ 100, 100 };
+								         
+		d3d12_render_texture             gpass_main_buffer{};
+		d3d12_depth_buffer               gpass_depth_buffer{};
+		math::u32v2                      dimensions{ initial_dimensions };
+		D3D12_RESOURCE_BARRIER_FLAGS     flags{};
+		ID3D12RootSignature*             gpass_root_sig{ nullptr };
+		ID3D12PipelineState*             gpass_pso{ nullptr };
 
 #if _DEBUG
-		constexpr f32           clear_value[4]{ 0.5f, 0.5f, 0.5f, 1.0f };
-#else
-		constexpr f32           clear_value[4]{};
+		constexpr f32                    clear_value[4]{ 0.5f, 0.5f, 0.5f, 1.0f };
+#else							         
+		constexpr f32                    clear_value[4]{};
 #endif
 
 		bool create_buffers(math::u32v2 size)
@@ -81,6 +81,8 @@ namespace primal::graphics::d3d12::gpass {
 
 			NAME_D3D12_OBJECT(gpass_main_buffer.resource(), L"GPass Main Buffer");
 			NAME_D3D12_OBJECT(gpass_depth_buffer.resource(), L"GPass Depth Buffer");
+
+			flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 
 			return gpass_main_buffer.resource() && gpass_depth_buffer.resource();
 		}
@@ -185,10 +187,19 @@ namespace primal::graphics::d3d12::gpass {
 	void add_transitions_for_depth_prepass(d3dx::d3d12_resource_barrier& barriers)
 	{
 		barriers.add(
-			gpass_depth_buffer.resource(),
-			D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE
+			gpass_main_buffer.resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY
 		);
+		barriers.add(
+			gpass_depth_buffer.resource(),
+			D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			flags
+		);
+
+		flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
 	}
 
 	void add_transitions_for_gpass(d3dx::d3d12_resource_barrier& barriers)
@@ -196,7 +207,8 @@ namespace primal::graphics::d3d12::gpass {
 		barriers.add(
 			gpass_main_buffer.resource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_BARRIER_FLAG_END_ONLY
 		);
 		barriers.add(
 			gpass_depth_buffer.resource(),
@@ -211,6 +223,12 @@ namespace primal::graphics::d3d12::gpass {
 			gpass_main_buffer.resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+
+		barriers.add(
+			gpass_depth_buffer.resource(),
+			D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE
 		);
 	}
 
