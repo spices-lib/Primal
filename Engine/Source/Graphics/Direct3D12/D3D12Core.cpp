@@ -3,6 +3,7 @@
 #include "D3D12Shaders.h"
 #include "D3D12GPass.h"
 #include "D3D12PostProcess.h"
+#include "D3D12Upload.h"
 
 using namespace Microsoft::WRL;
 
@@ -369,7 +370,7 @@ namespace primal::graphics::d3d12::core {
 			return failed_init();
 		}
 
-		if (!shaders::initialize() || !gpass::initialize() || !fx::initialize())
+		if (!shaders::initialize() || !gpass::initialize() || !fx::initialize() || !upload::initialize())
 		{
 			return failed_init();
 		}
@@ -392,6 +393,7 @@ namespace primal::graphics::d3d12::core {
 			process_deferred_releases(i);
 		}
 
+		upload::shutdown();
 		fx::shutdown();
 		gpass::shutdown();
 		shaders::shutdown();

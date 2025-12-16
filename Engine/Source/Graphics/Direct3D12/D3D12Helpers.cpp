@@ -74,7 +74,7 @@ namespace primal::graphics::d3d12::d3dx {
 		return create_pipeline_state(desc);
 	}
 
-	ID3D12Resource* create_buffer(u32 buffer_size, void* data, bool is_cpu_accessible,
+	ID3D12Resource* create_buffer(const void* data, u32 buffer_size, bool is_cpu_accessible,
 		D3D12_RESOURCE_STATES state, D3D12_RESOURCE_FLAGS flags, ID3D12Heap* heap, u64 heap_offset)
 	{
 		assert(buffer_size);

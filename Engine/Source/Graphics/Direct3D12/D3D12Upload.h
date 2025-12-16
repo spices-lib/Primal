@@ -19,6 +19,8 @@ namespace primal::graphics::d3d12::upload {
 
 	private:
 
+		DEBUG_OP(d3d12_upload_context() = default);
+
 		id3d12_graphic_command_list*    _cmd_list{ nullptr };
 		ID3D12Resource*                 _upload_buffer{ nullptr };
 		void*                           _cpu_address{ nullptr };
