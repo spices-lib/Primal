@@ -8,22 +8,17 @@ namespace primal::graphics::d3d12::content {
 
 	namespace {
 	
-		struct position_view
+		struct submesh_view
 		{
 			D3D12_VERTEX_BUFFER_VIEW       position_buffer_view{};
 			D3D12_INDEX_BUFFER_VIEW        index_buffer_view{};
-		};
-
-		struct element_view
-		{
-			D3D12_VERTEX_BUFFER_VIEW        element_buffer_view{};
-			u32                             elements_type{};
-			D3D_PRIMITIVE_TOPOLOGY          primitive_topology;
+			D3D12_VERTEX_BUFFER_VIEW       element_buffer_view{};
+			D3D_PRIMITIVE_TOPOLOGY         primitive_topology;
+			u32                            elements_type{};
 		};
 
 		utl::free_list<ID3D12Resource*>     submesh_buffers{};
-		utl::free_list<position_view>       position_views{};
-		utl::free_list<element_view>        element_views{};
+		utl::free_list<submesh_view>        submesh_views{};
 		std::mutex                          submesh_mutex{};
 
 		D3D_PRIMITIVE_TOPOLOGY get_d3d_primitive_topology(primal::content::primitive_topology::type type)
@@ -46,20 +41,20 @@ namespace primal::graphics::d3d12::content {
 
 	namespace submesh {
 
-		id::id_type add(const u8* data)
+		id::id_type add(const u8*& data)
 		{
 			utl::blob_stream_reader blob{ (const u8*)data };
 
 			const u32 element_size{ blob.read<u32>() };
 			const u32 vertex_count{ blob.read<u32>() };
-			const u32 elements_type{ blob.read<u32>() };
 			const u32 index_count{ blob.read<u32>() };
+			const u32 elements_type{ blob.read<u32>() };
 			const u32 primitive_topology{ blob.read<u32>() };
 			const u32 index_size{ (vertex_count < (1 << 16)) ? sizeof(u16) : sizeof(u32) };
 
 			const u32 position_buffer_size{ sizeof(math::v3) * vertex_count };
 			const u32 element_buffer_size{ element_size * vertex_count };
-			const u32 index_buffer_size{ index_size * vertex_count };
+			const u32 index_buffer_size{ index_size * index_count };
 
 			constexpr u32 alignment{ D3D12_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE };
 			const u32 aligned_position_buffer_size{ (u32)math::align_size_up<alignment>(position_buffer_size) };
@@ -71,37 +66,34 @@ namespace primal::graphics::d3d12::content {
 			blob.skip(total_buffer_size);
 			data = blob.position();
 
-			position_view position_view{};
-			position_view.position_buffer_view.BufferLocation = resource->GetGPUVirtualAddress();
-			position_view.position_buffer_view.SizeInBytes = position_buffer_size;
-			position_view.position_buffer_view.StrideInBytes = sizeof(math::v3);
+			submesh_view view{};
+			view.position_buffer_view.BufferLocation = resource->GetGPUVirtualAddress();
+			view.position_buffer_view.SizeInBytes = position_buffer_size;
+			view.position_buffer_view.StrideInBytes = sizeof(math::v3);
 
-			position_view.index_buffer_view.BufferLocation = resource->GetGPUVirtualAddress() + aligned_position_buffer_size + aligned_element_buffer_size;
-			position_view.index_buffer_view.Format = (index_size == sizeof(u16)) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-			position_view.index_buffer_view.SizeInBytes = index_buffer_size;
-
-			element_view element_view{};
 			if (element_size)
 			{
-				element_view.element_buffer_view.BufferLocation = resource->GetGPUVirtualAddress() + aligned_position_buffer_size;
-				element_view.element_buffer_view.SizeInBytes = element_buffer_size;
-				element_view.element_buffer_view.StrideInBytes = element_size;
+				view.element_buffer_view.BufferLocation = resource->GetGPUVirtualAddress() + aligned_position_buffer_size;
+				view.element_buffer_view.SizeInBytes = element_buffer_size;
+				view.element_buffer_view.StrideInBytes = element_size;
 			}
 
-			element_view.elements_type = elements_type;
-			element_view.primitive_topology = get_d3d_primitive_topology((primal::content::primitive_topology::type)primitive_topology);
+			view.index_buffer_view.BufferLocation = resource->GetGPUVirtualAddress() + aligned_position_buffer_size + aligned_element_buffer_size;
+			view.index_buffer_view.Format = (index_size == sizeof(u16)) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+			view.index_buffer_view.SizeInBytes = index_buffer_size;
+
+			view.elements_type = elements_type;
+			view.primitive_topology = get_d3d_primitive_topology((primal::content::primitive_topology::type)primitive_topology);
 
 			std::unique_lock lock(submesh_mutex);
 			submesh_buffers.add(resource);
-			position_views.add(position_view);
-			return element_views.add(element_view);
+			return submesh_views.add(view);
 		}
 
 		void remove(id::id_type id)
 		{
 			std::unique_lock lock(submesh_mutex);
-			position_views.remove(id);
-			element_views.remove(id);
+			submesh_buffers.remove(id);
 
 			core::deferred_release(submesh_buffers[id]);
 			submesh_buffers.remove(id);

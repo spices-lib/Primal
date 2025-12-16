@@ -84,6 +84,7 @@ namespace primal::graphics::d3d12::upload {
 
 	d3d12_upload_context::d3d12_upload_context(u32 aligned_size)
 	{
+		assert(upload_cmd_queue);
 		{
 			std::unique_lock lock(frame_mutex);
 
