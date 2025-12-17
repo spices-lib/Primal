@@ -55,4 +55,11 @@ namespace primal::graphics::d3d12::camera {
         id::id_type             _entity_id;
         bool                    _is_dirty;
     };
+    
+    graphics::camera create(camera_init_info info);
+    void remove(graphics::camera_id id);
+    void set_parameter(camera_id id, camera_parameter::parameter parameter, const void* data, u32 data_size);
+    void get_parameter(camera_id id, camera_parameter::parameter parameter, void* data, u32 data_size);
+    d3d12_camera& get(camera_id id);
+    
 }
