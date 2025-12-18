@@ -8,6 +8,8 @@
 #include <Graphics/Renderer.h>
 #include <Graphics/Direct3D12/D3D12Core.h>
 #include <Content/ContentToEngine.h>
+#include <Components/Entity.h>
+#include <Components/Transform.h>
 #include <thread>
 #include <filesystem>
 #include <fstream>
@@ -146,6 +148,14 @@ LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 
 	return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+game_entity::entity create_one_game_entity()
+{
+	transform::init_info transform_info{};
+	math::v3a rot{ 0, 3.14f, 0 };
+	DirectX::XMVECTOR quat{ DirectX::XMQuaternionRotationRollPitchYawFromVector(DirectX::XMLoadFloat3A(&rot)) };
+	DirectX::XMVECTOR rot_quat;
 }
 
 bool read_file(std::filesystem::path path, std::unique_ptr<u8[]>& data, u64& size)
