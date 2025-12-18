@@ -60,19 +60,152 @@ namespace primal::graphics::d3d12::camera {
             camera.far_z(far_z);
         }
         
-        void get_view(d3d12_camera camera, const void* data, u32 size)
+        void get_view(d3d12_camera camera, void* data, u32 size)
         {
             math::m4x4* matrix { (math::m4x4*)data };
             assert(sizeof(math::m4x4) == size);
             DirectX::XMStoreFloat4x4(matrix, camera.view());
         }
         
-        void get_projection(d3d12_camera camera, const void* data, u32 size)
+        void get_projection(d3d12_camera camera, void* data, u32 size)
         {
             math::m4x4* matrix { (math::m4x4*)data };
             assert(sizeof(math::m4x4) == size);
             DirectX::XMStoreFloat4x4(matrix, camera.projection());
         }
+        
+        void get_inverse_projection(d3d12_camera camera, void* data, u32 size)
+        {
+            math::m4x4* matrix { (math::m4x4*)data };
+            assert(sizeof(math::m4x4) == size);
+            DirectX::XMStoreFloat4x4(matrix, camera.inverse_projection());
+        }
+        
+        void get_view_projection(d3d12_camera camera, void* data, u32 size)
+        {
+            math::m4x4* matrix { (math::m4x4*)data };
+            assert(sizeof(math::m4x4) == size);
+            DirectX::XMStoreFloat4x4(matrix, camera.view_projection());
+        }
+        
+        void get_inverse_view_projection(d3d12_camera camera, void* data, u32 size)
+        {
+            math::m4x4* matrix { (math::m4x4*)data };
+            assert(sizeof(math::m4x4) == size);
+            DirectX::XMStoreFloat4x4(matrix, camera.inverse_view_projection());
+        }
+        
+        void get_up_vector(d3d12_camera camera, void* data, u32 size)
+        {
+            math::v3* up_vector { (math::v3*)data };
+            assert(sizeof(math::v3) == size);
+            DirectX::XMStoreFloat3(up_vector, camera.up());
+        }
+        
+        void get_field_of_view(d3d12_camera camera, void* data, u32 size)
+        {
+            assert(camera.projection_type() == graphics::camera::type::perspective);
+            f32* fov { (f32*)data };
+            assert(sizeof(f32) == size);
+            *fov = camera.field_of_view();
+        }
+        
+        void get_aspect_ratio(d3d12_camera camera, void* data, u32 size)
+        {
+            assert(camera.projection_type() == graphics::camera::type::perspective);
+            f32* aspect_ratio { (f32*)data };
+            assert(sizeof(f32) == size);
+            *aspect_ratio = camera.aspect_ratio();
+        }
+        
+        void get_view_width(d3d12_camera camera, void* data, u32 size)
+        {
+            assert(camera.projection_type() == graphics::camera::type::orthographic);
+            f32* view_width { (f32*)data };
+            assert(sizeof(f32) == size);
+            *view_width = camera.view_width();
+        }
+        
+        void get_view_height(d3d12_camera camera, void* data, u32 size)
+        {
+            assert(camera.projection_type() == graphics::camera::type::orthographic);
+            f32* view_height { (f32*)data };
+            assert(sizeof(f32) == size);
+            *view_height = camera.view_height();
+        }
+        
+        void get_near_z(d3d12_camera camera, void* data, u32 size)
+        {
+            f32* near_z { (f32*)data };
+            assert(sizeof(f32) == size);
+            *near_z = camera.near_z();
+        }
+        
+        void get_far_z(d3d12_camera camera, void* data, u32 size)
+        {
+            f32* far_z { (f32*)data };
+            assert(sizeof(f32) == size);
+            *far_z = camera.far_z();
+        }
+        
+        void get_project_type(d3d12_camera camera, void* data, u32 size)
+        {
+            graphics::camera::type* type { (graphics::camera::type*)data };
+            assert(sizeof(graphics::camera::type) == size);
+            *type = camera.projection_type();
+        }
+        
+        void get_entity_id(d3d12_camera camera, void* data, u32 size)
+        {
+            id::id_type* entity_id { (id::id_type*)data };
+            assert(sizeof(id::id_type) == size);
+            *entity_id = camera.entity_id();
+        }
+        
+        void dummy_set(d3d12_camera, const void*, u32){}
+        
+        using set_function = void(*)(d3d12_camera, const void*, u32);
+        using get_function = void(*)(d3d12_camera, void*, u32);
+        
+        constexpr set_function set_functions[]
+        {
+            set_up_vector,
+            set_field_of_view,
+            set_aspect_ratio,
+            set_view_width,
+            set_view_height,
+            set_near_z,
+            set_far_z,
+            dummy_set,
+            dummy_set,
+            dummy_set,
+            dummy_set,
+            dummy_set,
+            dummy_set,
+            dummy_set
+        };
+        
+        static_assert(_countof(set_functions) == camera_parameter::parameter::count);
+        
+        constexpr get_function get_functions[]
+        {
+            get_up_vector,
+            get_field_of_view,
+            get_aspect_ratio,
+            get_view_width,
+            get_view_height,
+            get_near_z,
+            get_far_z,
+            get_view,
+            get_projection,
+            get_inverse_projection,
+            get_view_projection,
+            get_inverse_view_projection,
+            get_project_type,
+            get_entity_id
+        };
+        
+        static_assert(_countof(get_functions) == camera_parameter::parameter::count);
     }
     
     d3d12_camera::d3d12_camera(camera_init_info info)
@@ -87,7 +220,25 @@ namespace primal::graphics::d3d12::camera {
     
     void d3d12_camera::update()
     { 
+        game_entity::entity entity{ game_entity::entity_id{ _entity_id} };
+        using namespace DirectX;
+        math::v3 pos{ entity.transform().position() };
+        math::v3 dir{ entity.transform().orientation() };
+        XMVECTOR position{ XMLoadFloat3(&pos) };
+        XMVECTOR direction{ XMLoadFloat3(&dir) };
+        _view = XMMatrixLookAtRH(position, direction, _up);
         
+        if (_is_dirty)
+        {
+            _projection = (_projection_type == graphics::camera::perspective)
+            ? XMMatrixPerspectiveFovRH(_field_of_view * XM_PI, _aspect_ratio, _near_z, _far_z)
+            : XMMatrixOrthographicRH(_view_width, _view_height, _near_z, _far_z);
+            _inverse_projection = XMMatrixInverse(nullptr, _projection);
+            _is_dirty = false;
+        }
+        
+        _view_projection = XMMatrixMultiply(_view, _projection);
+        _inverse_projection = XMMatrixInverse(nullptr, _view_projection);
     }
     
     void d3d12_camera::up(math::v3 up)
@@ -149,16 +300,23 @@ namespace primal::graphics::d3d12::camera {
     
     void set_parameter(camera_id id, camera_parameter::parameter parameter, const void* data, u32 data_size)
     {
-        
+        assert(data && data_size);
+        assert(parameter < camera_parameter::count);
+        d3d12_camera& camera{ get(id) };
+        set_functions[parameter](camera, data, data_size);
     }
     
     void get_parameter(camera_id id, camera_parameter::parameter parameter, void* data, u32 data_size)
     {
-        
+        assert(data && data_size);
+        assert(parameter < camera_parameter::count);
+        d3d12_camera& camera{ get(id) };
+        get_functions[parameter](camera, data, data_size);
     }
     
     d3d12_camera& get(camera_id id)
     {
-        
+        assert(id::is_valid(id));
+        return cameras[id];
     }
 }
