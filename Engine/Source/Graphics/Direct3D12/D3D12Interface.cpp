@@ -3,6 +3,7 @@
 #include "Graphics/GraphicPlatformInterface.h"
 #include "D3D12Core.h"
 #include "D3D12Content.h"
+#include "D3D12Camera.h"
 
 namespace primal::graphics::d3d12 {
 
@@ -18,6 +19,11 @@ namespace primal::graphics::d3d12 {
 		pi.surface.height = core::surface_height;
 		pi.surface.render = core::render_surface;
 
+		pi.camera.create = camera::create;
+		pi.camera.remove = camera::remove;
+		pi.camera.get_parameter = camera::get_parameter;
+		pi.camera.set_parameter = camera::set_parameter;
+		
 		pi.resources.add_submesh = content::submesh::add;
 		pi.resources.remove_submesh = content::submesh::remove;
 
