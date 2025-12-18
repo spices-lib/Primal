@@ -21,7 +21,7 @@ namespace primal::graphics::d3d12::content {
 		utl::free_list<submesh_view>        submesh_views{};
 		std::mutex                          submesh_mutex{};
 
-		D3D_PRIMITIVE_TOPOLOGY get_d3d_primitive_topology(primal::content::primitive_topology::type type)
+		D3D_PRIMITIVE_TOPOLOGY get_d3d_primitive_topology(primitive_topology::type type)
 		{
 			using namespace primal::content;
 			assert(type < primitive_topology::count);
@@ -83,7 +83,7 @@ namespace primal::graphics::d3d12::content {
 			view.index_buffer_view.SizeInBytes = index_buffer_size;
 
 			view.elements_type = elements_type;
-			view.primitive_topology = get_d3d_primitive_topology((primal::content::primitive_topology::type)primitive_topology);
+			view.primitive_topology = get_d3d_primitive_topology((primitive_topology::type)primitive_topology);
 
 			std::unique_lock lock(submesh_mutex);
 			submesh_buffers.add(resource);
