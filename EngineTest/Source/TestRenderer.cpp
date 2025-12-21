@@ -239,7 +239,7 @@ bool test_initialize()
 		create_render_surface(_surfaces[i], info[i]);
 	}
 
-	std::unique_ptr<u8[]> model;
+	/*std::unique_ptr<u8[]> model;
 	u64 size{0};
 	if (!read_file("../../enginetest/model.model", model, size))
 	{
@@ -247,7 +247,7 @@ bool test_initialize()
 	}
 	
 	model_id = content::create_resource(model.get(), content::asset_type::mesh);
-	if (!id::is_valid(model_id)) return false;
+	if (!id::is_valid(model_id)) return false;*/
 	
 	init_test_workers(buffer_test_worker);
 

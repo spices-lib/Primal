@@ -2,6 +2,7 @@
 #include <Content/ContentLoader.h>
 #include <Content/ContentToEngine.h>
 #include <ShaderCompilation.h>
+#include <Components/Entity.h>
 #include <filesystem>
 
 #include "Graphics/Direct3D12/D3D12Shaders.h"
@@ -15,6 +16,8 @@ namespace {
     id::id_type model_id{ id::invalid_id };
     id::id_type vs_id{ id::invalid_id };
     id::id_type ps_id{ id::invalid_id };
+    
+    std::unordered_map<id::id_type, id::id_type> render_item_entity_map;
     
     void load_model()
     {
@@ -35,7 +38,7 @@ namespace {
         info.function = "TestShaderVS";
         info.type = shader_type::vertex;
         
-        const char* shader_path{ "../../enginetest/" };
+        const char* shader_path{ "../EngineTest/Source/" };
         
         auto vertex_shader = compile_shader(info, shader_path);
         assert(vertex_shader.get());
@@ -59,10 +62,35 @@ id::id_type create_render_item(id::id_type entity_id)
     _1.join();
     _2.join();
     
-    return id::invalid_id;
+    id::id_type item_id{ 0 };
+    
+    render_item_entity_map[item_id] = entity_id;
+    return item_id;
 }
 
 void destroy_render_item(id::id_type item_id)
 {
+    if (id::is_valid(item_id))
+    {
+        auto pair = render_item_entity_map.find(item_id);
+        if (pair != render_item_entity_map.end())
+        {
+            game_entity::remove(game_entity::entity_id{ pair->second });
+        }
+    }
     
+    if (id::is_valid(vs_id))
+    {
+        content::remove_shader(vs_id);
+    }
+    
+    if (id::is_valid(ps_id))
+    {
+        content::remove_shader(ps_id);
+    }
+    
+    if (id::is_valid(model_id))
+    {
+        content::destroy_resource(model_id, content::asset_type::mesh);
+    }
 }
