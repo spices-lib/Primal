@@ -4,7 +4,7 @@
 #include "Components/Script.h"
 #include "Graphics/Renderer.h"
 
-#if !define(SHIPPING) && defines(_WIN64)
+#if !define(SHIPPING)
 
 #include <fstream>
 #include <filesystem>

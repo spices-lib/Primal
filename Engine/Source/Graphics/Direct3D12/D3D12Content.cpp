@@ -3,6 +3,7 @@
 #include "D3D12Helpers.h"
 #include "Content/ContentToEngine.h"
 #include "D3D12Core.h"
+#include "D3D12GPass.h"
 
 namespace primal::graphics::d3d12::content {
 
@@ -10,17 +11,134 @@ namespace primal::graphics::d3d12::content {
 	
 		struct submesh_view
 		{
-			D3D12_VERTEX_BUFFER_VIEW       position_buffer_view{};
-			D3D12_INDEX_BUFFER_VIEW        index_buffer_view{};
-			D3D12_VERTEX_BUFFER_VIEW       element_buffer_view{};
-			D3D_PRIMITIVE_TOPOLOGY         primitive_topology;
-			u32                            elements_type{};
+			D3D12_VERTEX_BUFFER_VIEW            position_buffer_view{};
+			D3D12_INDEX_BUFFER_VIEW             index_buffer_view{};
+			D3D12_VERTEX_BUFFER_VIEW            element_buffer_view{};
+			D3D_PRIMITIVE_TOPOLOGY              primitive_topology;
+			u32                                 elements_type{};
 		};
 
-		utl::free_list<ID3D12Resource*>     submesh_buffers{};
-		utl::free_list<submesh_view>        submesh_views{};
-		std::mutex                          submesh_mutex{};
+		utl::free_list<ID3D12Resource*>         submesh_buffers{};
+		utl::free_list<submesh_view>            submesh_views{};
+		std::mutex                              submesh_mutex{};
 
+		utl::free_list<d3d12_texture>           textures;
+		std::mutex                              texture_mutex{};
+		
+		utl::vector<ID3D12RootSignature*>       root_signatures;
+		std::unordered_map<u64, id::id_type>    mtl_rs_map;
+		utl::free_list<std::unique_ptr<u8[]>>   materials;
+		std::mutex                              material_mutex{};
+		
+		id::id_type create_root_signature(material_type::type type, shader_flags::flags flags);
+		
+		class d3d12_material_stream
+		{
+		public:
+			
+			DISABLE_COPY_AND_MOVE(d3d12_material_stream)
+			
+			explicit d3d12_material_stream(u8* const material_buffer)
+				: _buffer{material_buffer}
+			{
+				initialize();
+			}
+			
+			explicit d3d12_material_stream(std::unique_ptr<u8[]>& material_buffer, material_init_info info)
+			{
+				assert(!material_buffer);
+				
+				u32 shader_count{ 0 };
+				u32 flags{ 0 };
+				for (u32 i{ 0 }; i < shader_type::count; ++i)
+				{
+					if (id::is_valid(info.shader_ids[i]))
+					{
+						++shader_count;
+						flags |= (i << i);
+					}
+				}
+				
+				assert(shader_count && flags);
+				
+				const u32 buffer_size {
+					sizeof(material_type::type) +           // material type
+					sizeof(shader_type::flags) +            // shader flags
+					sizeof(id::id_type) +                   // root signature id
+					sizeof(u32) +                           // texture count
+					sizeof(id::id_type) * shader_count +    // shader ids
+					(sizeof(id::id_type) + sizeof(u32)) * info.texture_count  // texture ids and descriptor indices
+				};
+				
+				material_buffer = std::make_unique<u8[]>(buffer_size);
+				_buffer = material_buffer.get();
+				u8* const buffer { _buffer };
+				
+				*(material_type::type*)buffer = info.type;
+				*(shader_flags::flags*)(&buffer[shader_flags_index]) = (shader_flags::flags)flags;
+				*(id::id_type*)(&buffer[root_signature_index]) = create_root_signature(info.type, (shader_flags::flags)flags);
+				*(u32*)(&buffer[texture_count_index]) = info.texture_count;
+				
+				initialize();
+				
+				if (info.texture_count)
+				{
+					memcpy(_texture_ids, info.texture_ids, info.texture_count * sizeof(id::id_type));
+					texture::get_descriptor_indices(_texture_ids, info.texture_count, _descriptor_indices);
+				}
+				
+				u32 shader_index{ 0 };
+				for (u32 i {0}; i < shader_type::count; ++i)
+				{
+					if (id::is_valid(info.shader_ids[i]))
+					{
+						_shader_ids[shader_index] = info.shader_ids[i];
+						++shader_index;
+					}
+				}
+				
+				assert(shader_index == (u32)_mm_popcnt_u32(_shader_flags));
+			}
+			
+			[[nodiscard]] constexpr u32 texture_count() const { return _texture_count; }
+			[[nodiscard]] constexpr material_type::type material_type() const { return _type; }
+			[[nodiscard]] constexpr shader_flags::flags shader_flags() const { return _shader_flags; }
+			[[nodiscard]] constexpr id::id_type root_signature_id() const { return _root_signature_id; }
+			[[nodiscard]] constexpr id::id_type* texture_ids() const { return _texture_ids; }
+			[[nodiscard]] constexpr u32* descriptor_indices() const { return _descriptor_indices; }
+			[[nodiscard]] constexpr id::id_type* shader_ids() const { return _shader_ids; }
+			
+		private:
+			
+			void initialize()
+			{
+				assert(_buffer);
+				u8* const buffer { _buffer };
+				
+				_type = *(material_type::type*)buffer;
+				_shader_flags = *(shader_flags::flags*)(&buffer[shader_flags_index]);
+				_root_signature_id = *(id::id_type*)(&buffer[root_signature_index]);
+				_texture_count = *(u32*)(&buffer[texture_count_index]);
+				
+				_shader_ids = (id::id_type*)(&buffer[texture_count_index + sizeof(u32)]);
+				_texture_ids = _texture_count ? &_shader_ids[_mm_popcnt_u32(_shader_flags)] : nullptr;
+				_descriptor_indices = _texture_count ? (u32*)(&_texture_ids[_texture_count]) : nullptr;
+			}
+			
+			constexpr static u32  shader_flags_index{ sizeof(material_type::type) };
+			constexpr static u32  root_signature_index{ shader_flags_index + sizeof(shader_flags::flags) };
+			constexpr static u32  texture_count_index{ root_signature_index + sizeof(id::id_type) };
+			
+			u8*                    _buffer;
+			id::id_type*           _texture_ids;
+			u32*                   _descriptor_indices;
+			id::id_type*           _shader_ids;
+			id::id_type            _root_signature_id;
+			u32                    _texture_count;
+			material_type::type    _type;
+			shader_flags::flags    _shader_flags;
+		};
+		
 		D3D_PRIMITIVE_TOPOLOGY get_d3d_primitive_topology(primitive_topology::type type)
 		{
 			using namespace primal::content;
@@ -36,6 +154,52 @@ namespace primal::graphics::d3d12::content {
 			}
 
 			return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+		}
+		
+		id::id_type create_root_signature(material_type::type type, shader_flags::flags flags)
+		{
+			assert(type < material_type::count);
+			static_assert(sizeof(type) == sizeof(u32) && sizeof(flags) == sizeof(u32));
+			const u64 key{ (u64)type << 32 | flags };
+			auto pair = mtl_rs_map.find(key);
+			if (pair != mtl_rs_map.end())
+			{
+				assert(pair->first == key);
+				return pair->second;
+			}
+			
+			ID3D12RootSignature* root_signature{ nullptr };
+			
+			switch (type)
+			{
+			case material_type::opaque:
+			{
+				using params = gpass::opaque_root_parameter;
+				d3dx::d3d12_root_parameter parameters[params::count]{};
+				parameters[params::per_frame_data].as_cbv(D3D12_SHADER_VISIBILITY_ALL, 0);
+					
+				D3D12_SHADER_VISIBILITY buffer_visibility{};
+				D3D12_SHADER_VISIBILITY data_visibility{};
+					
+				if (flags & shader_flags::vertex)
+				{
+					buffer_visibility = D3D12_SHADER_VISIBILITY_VERTEX;
+					data_visibility = D3D12_SHADER_VISIBILITY_VERTEX;
+				}
+				else if (flags & shader_flags::mesh)
+				{
+					buffer_visibility = D3D12_SHADER_VISIBILITY_MESH;
+					data_visibility = D3D12_SHADER_VISIBILITY_MESH;
+				}
+					
+				if ((flags & shader_flags::hull) || (flags & shader_flags::geometry) ||
+					(flags & shader_flags::amplification))
+				{
+					buffer_visibility = D3D12_SHADER_VISIBILITY_ALL;
+					data_visibility = D3D12_SHADER_VISIBILITY_ALL;
+				}
+			}
+			}
 		}
 	}
 
@@ -97,6 +261,49 @@ namespace primal::graphics::d3d12::content {
 
 			core::deferred_release(submesh_buffers[id]);
 			submesh_buffers.remove(id);
+		}
+	}
+	
+	namespace texture {
+		
+		id::id_type add(const u8* const)
+		{
+			
+		}
+		
+		void remove(id::id_type)
+		{
+			
+		}
+		
+		void get_descriptor_indices(const id::id_type* const texture_ids, u32 id_count, u32* const indices)
+		{
+			assert(texture_ids && id_count && indices);
+			std::unique_lock lock(texture_mutex);
+			
+			for (u32 i{0}; i < id_count; ++i)
+			{
+				indices[i] = textures[i].srv().index;
+			}
+		}
+		
+	}
+	
+	namespace material { 
+		
+		id::id_type add(material_init_info info)
+		{
+			std::unique_ptr<u8[]> buffer;
+			std::unique_lock lock(material_mutex);
+			
+			assert(buffer);
+			return materials.add(std::move(buffer));
+		}
+		
+		void remove(id::id_type id)
+		{
+			std::unique_lock lock(material_mutex);
+			materials.remove(id);
 		}
 	}
 }

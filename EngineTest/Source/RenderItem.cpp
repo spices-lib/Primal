@@ -3,9 +3,10 @@
 #include <Content/ContentToEngine.h>
 #include <ShaderCompilation.h>
 #include <Components/Entity.h>
-#include <filesystem>
+#include <Graphics/Renderer.h>
+#include <Graphics/Direct3D12/D3D12Shaders.h>
 
-#include "Graphics/Direct3D12/D3D12Shaders.h"
+#include <filesystem>
 
 using namespace primal;
 
@@ -16,6 +17,7 @@ namespace {
     id::id_type model_id{ id::invalid_id };
     id::id_type vs_id{ id::invalid_id };
     id::id_type ps_id{ id::invalid_id };
+    id::id_type mtl_id{ id::invalid_id };
     
     std::unordered_map<id::id_type, id::id_type> render_item_entity_map;
     
@@ -54,6 +56,15 @@ namespace {
     }
 }
 
+void create_material()
+{
+    graphics::material_init_info info{};
+    info.shader_ids[graphics::shader_type::vertex] = vs_id;
+    info.shader_ids[graphics::shader_type::pixel] = ps_id;
+    info.type = graphics::material_type::opaque;
+    mtl_id = content::create_resource(&info, content::asset_type::material);
+}
+
 id::id_type create_render_item(id::id_type entity_id)
 {
     auto _1 = std::thread([]{ load_model(); });
@@ -61,6 +72,8 @@ id::id_type create_render_item(id::id_type entity_id)
     
     _1.join();
     _2.join();
+    
+    create_material();
     
     id::id_type item_id{ 0 };
     
