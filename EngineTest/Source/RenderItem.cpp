@@ -4,6 +4,8 @@
 #include <ShaderCompilation.h>
 #include <filesystem>
 
+#include "Graphics/Direct3D12/D3D12Shaders.h"
+
 using namespace primal;
 
 bool read_file(std::filesystem::path path, std::unique_ptr<u8[]>& data, u64& size);
@@ -26,7 +28,26 @@ namespace {
     
     void load_shaders()
     {
+        using namespace graphics::d3d12::shaders;
         
+        shader_file_info info{};
+        info.file_name = "TestShader.hlsl";
+        info.function = "TestShaderVS";
+        info.type = shader_type::vertex;
+        
+        const char* shader_path{ "../../enginetest/" };
+        
+        auto vertex_shader = compile_shader(info, shader_path);
+        assert(vertex_shader.get());
+        
+        info.function = "TestShaderPS";
+        info.type = shader_type::pixel;
+        
+        auto pixel_shader = compile_shader(info, shader_path);
+        assert(pixel_shader.get());
+        
+        vs_id = content::add_shader(vertex_shader.get());
+        ps_id = content::add_shader(pixel_shader.get());
     }
 }
 

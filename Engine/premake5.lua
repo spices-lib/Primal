@@ -50,6 +50,8 @@ project "Engine"
 		{
 			"%{Library.dxgi}",
 			"%{Library.d3d12}",
+
+			
 		}
 
 		buildoptions 

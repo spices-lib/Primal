@@ -3,10 +3,12 @@ IncludeDir["Engine"]                      = "%{wks.location}/Engine/Source"
 IncludeDir["EngineDLL"]                   = "%{wks.location}/EngineDLL/Source"
 IncludeDir["PrimalEditor"]                = "%{wks.location}/PrimalEditor/Source"
 IncludeDir["DirectXShaderCompiler"]       = "%{wks.location}/ThirdParty/DirectXShaderCompiler/inc"
+IncludeDir["DirectX12AgilitySDK"]         = "%{wks.location}/ThirdParty/DirectX12AgilitySDK/include"
 IncludeDir["FBX"]                         = "C:/Program Files/Autodesk/FBX/FBX SDK/2020.3.7/include"
 
 LibraryDir                                = {}
 LibraryDir["DirectXShaderCompiler"]       = "%{wks.location}/ThirdParty/DirectXShaderCompiler/lib/x64"
+LibraryDir["DirectX12AgilitySDK"]         = "%{wks.location}/ThirdParty/DirectX12AgilitySDK/bin/x64"
 LibraryDir["FBX"]                         = "%{IncludeDir.FBX}/../lib/x64"
 
 Library                                   = {}
@@ -21,3 +23,6 @@ Library["FBX_Debug_zlib"]                 = "%{LibraryDir.FBX}/debug/zlib-mt.lib
 Library["FBX_Release_fbx"]                = "%{LibraryDir.FBX}/release/libfbxsdk-mt.lib"
 Library["FBX_Release_xml"]                = "%{LibraryDir.FBX}/release/libxml2-mt.lib"
 Library["FBX_Release_zlib"]               = "%{LibraryDir.FBX}/release/zlib-mt.lib"
+
+Library["D3D12Core"]                      = "%{LibraryDir.DirectX12AgilitySDK}/D3D12Core.dll"
+Library["D3D12SDKLayers"]                 = "%{LibraryDir.DirectX12AgilitySDK}/d3d12SDKLayers.dll"

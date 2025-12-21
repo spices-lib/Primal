@@ -33,4 +33,7 @@ namespace primal::content {
 	id::id_type create_resource(const void* const data, asset_type::type type);
 	void destroy_resource(id::id_type id, asset_type::type type);
 
+	id::id_type add_shader(const u8* data);
+	void remove_shader(id::id_type id);
+	compiled_shader_ptr get_shader(id::id_type id);
 }
