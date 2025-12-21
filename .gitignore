@@ -2,12 +2,14 @@
 /.idea
 /bin-int
 /bin
+/packages
 
 *.user
 *.sln
 *.vcxproj
 *.csproj
 *.vcxproj.filters
+*packages.config
 
 EngineTest/shaders
 

@@ -8,7 +8,6 @@ IncludeDir["FBX"]                         = "C:/Program Files/Autodesk/FBX/FBX S
 
 LibraryDir                                = {}
 LibraryDir["DirectXShaderCompiler"]       = "%{wks.location}/ThirdParty/DirectXShaderCompiler/lib/x64"
-LibraryDir["DirectX12AgilitySDK"]         = "%{wks.location}/ThirdParty/DirectX12AgilitySDK/bin/x64"
 LibraryDir["FBX"]                         = "%{IncludeDir.FBX}/../lib/x64"
 
 Library                                   = {}
@@ -24,5 +23,5 @@ Library["FBX_Release_fbx"]                = "%{LibraryDir.FBX}/release/libfbxsdk
 Library["FBX_Release_xml"]                = "%{LibraryDir.FBX}/release/libxml2-mt.lib"
 Library["FBX_Release_zlib"]               = "%{LibraryDir.FBX}/release/zlib-mt.lib"
 
-Library["D3D12Core"]                      = "%{LibraryDir.DirectX12AgilitySDK}/D3D12Core.dll"
-Library["D3D12SDKLayers"]                 = "%{LibraryDir.DirectX12AgilitySDK}/d3d12SDKLayers.dll"
+Nugets                                    = {}
+Nugets["DirectX12AgilitySDK"]             = "Microsoft.Direct3D.D3D12:1.618.5"

@@ -2,6 +2,7 @@
 #include "Common/CommonHeaders.h"
 #include "Platform/Windows.h"
 #include "EngineAPI/Camera.h"
+#include "GraphicsPlatform.h"
 
 namespace primal::graphics {
 
@@ -110,13 +111,6 @@ namespace primal::graphics {
 
 			count
 		};
-	};
-	
-	enum class graphics_platform : u32
-	{
-		direct3d12 = 0,
-		vulkan = 1,
-		open_gl = 2,
 	};
 
 	bool initialize(graphics_platform platform);

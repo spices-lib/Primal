@@ -13,7 +13,7 @@ namespace primal::graphics {
 
 		platform_interface gfx{};
 	
-		bool set_platform_interface(graphics_platform platform)
+		bool set_platform_interface(graphics_platform platform, platform_interface& pi)
 		{
 			switch (platform)
 			{
@@ -31,7 +31,7 @@ namespace primal::graphics {
 
 	bool initialize(graphics_platform platform)
 	{
-		return set_platform_interface(platform) && gfx.initialize();
+		return set_platform_interface(platform, gfx) && gfx.initialize();
 	}
 
 	void shutdown()

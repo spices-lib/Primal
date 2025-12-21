@@ -1,7 +1,7 @@
 #pragma once
 #include "Common/CommonHeaders.h"
 
-#if !define(SHIPPING)
+#if !define(SHIPPING) && defines(_WIN64)
 
 namespace primal::content {
 

@@ -38,6 +38,11 @@ project "Engine"
 		systemversion   "latest" 
 		editAndContinue "Off"
 
+		nuget
+		{
+			"%{Nugets.DirectX12AgilitySDK}"
+		}
+
 		includedirs
 		{
 		}
@@ -50,8 +55,6 @@ project "Engine"
 		{
 			"%{Library.dxgi}",
 			"%{Library.d3d12}",
-
-			
 		}
 
 		buildoptions 

@@ -219,7 +219,7 @@ bool test_initialize()
 		}
 	}
 
-	bool result{ graphics::initialize(graphics::graphics_platform::direct3d12) };
+	bool result{ graphics::initialize(graphics_platform::direct3d12) };
 	if (!result)
 	{
 		return result;

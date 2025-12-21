@@ -181,7 +181,7 @@ namespace
 
 	decltype(auto) get_engine_shaders_path()
 	{
-		return std::filesystem::absolute(graphics::get_engine_shaders_path(graphics::graphics_platform::direct3d12));
+		return std::filesystem::absolute(graphics::get_engine_shaders_path(graphics_platform::direct3d12));
 	}
 
 	bool compiled_shaders_are_up_to_date()
