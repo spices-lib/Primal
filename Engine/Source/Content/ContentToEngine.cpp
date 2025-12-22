@@ -236,7 +236,7 @@ namespace primal::content {
 			case asset_type::texture:break;
 		}
 
-		assert(id::id_type(id));
+		assert(id::is_valid(id));
 		return id;
 	}
 

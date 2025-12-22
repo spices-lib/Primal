@@ -26,7 +26,7 @@ namespace primal::graphics::d3d12::fx {
 			assert(!fx_root_sig && !fx_pso);
 
 			using idx = fx_root_param_indices;
-			d3dx::d3d12_root_parameter parameters[2]{};
+			d3dx::d3d12_root_parameter parameters[1]{};
 			parameters[idx::root_constants].as_constants(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 
 			d3dx::d3d12_root_signature_desc root_signature{ &parameters[0], _countof(parameters) };

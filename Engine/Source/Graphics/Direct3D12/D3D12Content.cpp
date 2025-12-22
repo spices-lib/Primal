@@ -55,7 +55,7 @@ namespace primal::graphics::d3d12::content {
 					if (id::is_valid(info.shader_ids[i]))
 					{
 						++shader_count;
-						flags |= (i << i);
+						flags |= (1 << i);
 					}
 				}
 				
