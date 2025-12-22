@@ -529,7 +529,7 @@ namespace primal::graphics::d3d12::core {
 		d3dx::d3d12_resource_barrier& barriers{ resource_barriers };
 
 		ID3D12DescriptorHeap* const heaps[]{ srv_desc_heap.heap() };
-		cmd_list->SetDescriptorHeaps(1, &heaps[0]);
+		cmd_list->SetDescriptorHeaps(_countof(heaps), &heaps[0]);
 
 		cmd_list->RSSetViewports(1, &surface.viewport());
 		cmd_list->RSSetScissorRects(1, &surface.scissor_rect());

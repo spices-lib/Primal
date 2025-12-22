@@ -419,6 +419,8 @@ namespace primal::graphics::d3d12::content {
 			{
 				
 			}
+			
+			return id::invalid_id;
 		}
 		
 		void remove(id::id_type id)
