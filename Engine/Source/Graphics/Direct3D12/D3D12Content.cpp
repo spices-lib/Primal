@@ -156,6 +156,20 @@ namespace primal::graphics::d3d12::content {
 			return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 		}
 		
+		constexpr D3D12_ROOT_SIGNATURE_FLAGS get_root_signature_flags(shader_flags::flags flags)
+		{
+			D3D12_ROOT_SIGNATURE_FLAGS default_flags{ d3dx::d3d12_root_signature_desc::default_flags };
+			if (flags & shader_flags::vertex)           default_flags &= ~D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
+			if (flags & shader_flags::hull)             default_flags &= ~D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+			if (flags & shader_flags::domain)           default_flags &= ~D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+			if (flags & shader_flags::geometry)         default_flags &= ~D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+			if (flags & shader_flags::pixel)            default_flags &= ~D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+			if (flags & shader_flags::amplification)    default_flags &= ~D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+			if (flags & shader_flags::mesh)             default_flags &= ~D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
+				
+			return default_flags;
+		}
+		
 		id::id_type create_root_signature(material_type::type type, shader_flags::flags flags)
 		{
 			assert(type < material_type::count);
@@ -177,10 +191,10 @@ namespace primal::graphics::d3d12::content {
 				using params = gpass::opaque_root_parameter;
 				d3dx::d3d12_root_parameter parameters[params::count]{};
 				parameters[params::per_frame_data].as_cbv(D3D12_SHADER_VISIBILITY_ALL, 0);
-					
+				
 				D3D12_SHADER_VISIBILITY buffer_visibility{};
 				D3D12_SHADER_VISIBILITY data_visibility{};
-					
+				
 				if (flags & shader_flags::vertex)
 				{
 					buffer_visibility = D3D12_SHADER_VISIBILITY_VERTEX;
@@ -191,18 +205,56 @@ namespace primal::graphics::d3d12::content {
 					buffer_visibility = D3D12_SHADER_VISIBILITY_MESH;
 					data_visibility = D3D12_SHADER_VISIBILITY_MESH;
 				}
-					
+				
 				if ((flags & shader_flags::hull) || (flags & shader_flags::geometry) ||
 					(flags & shader_flags::amplification))
 				{
 					buffer_visibility = D3D12_SHADER_VISIBILITY_ALL;
 					data_visibility = D3D12_SHADER_VISIBILITY_ALL;
 				}
+				
+				if ((flags & shader_flags::pixel) || (flags & shader_flags::compute))
+				{
+					data_visibility = D3D12_SHADER_VISIBILITY_ALL;
+				}
+				
+				parameters[params::position_buffer].as_srv(buffer_visibility, 0);
+				parameters[params::element_buffer].as_srv(buffer_visibility, 1);
+				parameters[params::srv_indices].as_srv(D3D12_SHADER_VISIBILITY_PIXEL, 2);
+				parameters[params::per_object_data].as_cbv(data_visibility, 1);
+				
+				root_signature = d3dx::d3d12_root_signature_desc{ &parameters[0], _countof(parameters), get_root_signature_flags(flags) }.create();
+					
+				break;
 			}
 			}
+			
+			assert(root_signature);
+			const id::id_type id{ (id::id_type)root_signatures.size() };
+			root_signatures.emplace_back(root_signature);
+			mtl_rs_map.emplace(key, id);
+			NAME_D3D12_OBJECT_INDEXED(root_signature, (int)key, L"GPass Root Signature - key");
+			
+			return id;
 		}
 	}
 
+	bool initialize()
+	{
+		return true;
+	}
+	
+	void shutdown()
+	{
+		for (auto& item : root_signatures)
+		{
+			core::release(item);
+		}
+		
+		mtl_rs_map.clear();
+		root_signatures.clear();
+	}
+	
 	namespace submesh {
 
 		id::id_type add(const u8*& data)
@@ -266,15 +318,15 @@ namespace primal::graphics::d3d12::content {
 	
 	namespace texture {
 		
-		id::id_type add(const u8* const)
+		/*id::id_type add(const u8* const)
 		{
-			
+
 		}
 		
-		void remove(id::id_type)
+		void remove(id::id_type id)
 		{
-			
-		}
+
+		}*/
 		
 		void get_descriptor_indices(const id::id_type* const texture_ids, u32 id_count, u32* const indices)
 		{
@@ -295,7 +347,7 @@ namespace primal::graphics::d3d12::content {
 		{
 			std::unique_ptr<u8[]> buffer;
 			std::unique_lock lock(material_mutex);
-			
+			d3d12_material_stream stream{ buffer, info };
 			assert(buffer);
 			return materials.add(std::move(buffer));
 		}

@@ -4,6 +4,7 @@
 #include "D3D12GPass.h"
 #include "D3D12PostProcess.h"
 #include "D3D12Upload.h"
+#include "D3D12Content.h"
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 618; }
 extern "C" { __declspec(dllexport) extern const char * D3D12SDKPath = reinterpret_cast<const char*>(u8"./D3D12/"); }
@@ -373,7 +374,7 @@ namespace primal::graphics::d3d12::core {
 			return failed_init();
 		}
 
-		if (!shaders::initialize() || !gpass::initialize() || !fx::initialize() || !upload::initialize())
+		if (!shaders::initialize() || !gpass::initialize() || !fx::initialize() || !upload::initialize() || !content::initialize())
 		{
 			return failed_init();
 		}
@@ -396,6 +397,7 @@ namespace primal::graphics::d3d12::core {
 			process_deferred_releases(i);
 		}
 
+		content::shutdown();
 		upload::shutdown();
 		fx::shutdown();
 		gpass::shutdown();
