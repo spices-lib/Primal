@@ -18,17 +18,23 @@ namespace primal::graphics::d3d12::content {
 			u32                                 elements_type{};
 		};
 
-		utl::free_list<ID3D12Resource*>         submesh_buffers{};
-		utl::free_list<submesh_view>            submesh_views{};
-		std::mutex                              submesh_mutex{};
-
-		utl::free_list<d3d12_texture>           textures;
-		std::mutex                              texture_mutex{};
+		utl::free_list<ID3D12Resource*>                 submesh_buffers{};
+		utl::free_list<submesh_view>                    submesh_views{};
+		std::mutex                                      submesh_mutex{};
+        
+		utl::free_list<d3d12_texture>                   textures;
+		std::mutex                                      texture_mutex{};
+		        
+		utl::vector<ID3D12RootSignature*>               root_signatures;
+		std::unordered_map<u64, id::id_type>            mtl_rs_map;
+		utl::free_list<std::unique_ptr<u8[]>>           materials;
+		std::mutex                                      material_mutex{};
 		
-		utl::vector<ID3D12RootSignature*>       root_signatures;
-		std::unordered_map<u64, id::id_type>    mtl_rs_map;
-		utl::free_list<std::unique_ptr<u8[]>>   materials;
-		std::mutex                              material_mutex{};
+		utl::free_list<render_item::d3d12_render_item>  render_items;
+		utl::free_list<render_item::d3d12_render_item>  render_item_ids;
+		utl::vector<ID3D12PipelineState*>               pipeline_states;
+		std::unordered_map<u64, id::id_type>            pso_map;
+		std::mutex                                      render_item_mutex{};
 		
 		id::id_type create_root_signature(material_type::type type, shader_flags::flags flags);
 		
@@ -314,19 +320,27 @@ namespace primal::graphics::d3d12::content {
 			core::deferred_release(submesh_buffers[id]);
 			submesh_buffers.remove(id);
 		}
+		
+		void get_views(const id::id_type* const gpu_ids, u32 id_count, const views_cache& cache)
+		{
+			assert(gpu_ids && id_count);
+			assert(cache.position_buffers && cache.element_buffers && cache.index_buffer_views &&
+				cache.primitive_topologies && cache.elements_types);
+			
+			std::unique_lock lock(submesh_mutex);
+			for (u32 i = 0; i < id_count; ++i)
+			{
+				const submesh_view& view{ submesh_views[gpu_ids[i]] };
+				cache.position_buffers[i] = view.position_buffer_view.BufferLocation;
+				cache.element_buffers[i] = view.element_buffer_view.BufferLocation;
+				cache.index_buffer_views[i] = view.index_buffer_view;
+				cache.primitive_topologies[i] = view.primitive_topology;
+				cache.elements_types[i] = view.elements_type;
+			}
+		}
 	}
 	
 	namespace texture {
-		
-		/*id::id_type add(const u8* const)
-		{
-
-		}
-		
-		void remove(id::id_type id)
-		{
-
-		}*/
 		
 		void get_descriptor_indices(const id::id_type* const texture_ids, u32 id_count, u32* const indices)
 		{
@@ -356,6 +370,65 @@ namespace primal::graphics::d3d12::content {
 		{
 			std::unique_lock lock(material_mutex);
 			materials.remove(id);
+		}
+		
+		void get_materials(const id::id_type* const material_ids, u32 material_count, const materials_cache& cache)
+		{
+			assert(material_ids && material_count);
+			assert(cache.root_signature && cache.material_types);
+			
+			std::unique_lock lock(material_mutex);
+			
+			for (u32 i{0}; i < material_count; ++i)
+			{
+				const d3d12_material_stream stream{ materials[material_ids[i]].get() };
+				cache.root_signature[i] = root_signatures[stream.root_signature_id()];
+				cache.material_types[i] = stream.material_type();
+			}
+		}
+	}
+	
+	namespace render_item {
+		
+		id::id_type add(id::id_type entity_id, id::id_type geometry_content_id, u32 material_count, const id::id_type* const material_ids)
+		{
+			assert(id::is_valid(entity_id) && id::is_valid(geometry_content_id));
+			assert(material_count && material_ids);
+			id::id_type* const gpu_ids{ (id::id_type* const)alloca(material_count * sizeof(id::id_type)) };
+			primal::content::get_submesh_gpu_ids(geometry_content_id, material_count, gpu_ids);
+			
+			submesh::views_cache views_cache
+			{
+				(D3D12_GPU_VIRTUAL_ADDRESS * const)alloca(material_count * sizeof(D3D12_GPU_VIRTUAL_ADDRESS)),
+				(D3D12_GPU_VIRTUAL_ADDRESS * const)alloca(material_count * sizeof(D3D12_GPU_VIRTUAL_ADDRESS)),
+				(D3D12_INDEX_BUFFER_VIEW* const)alloca(material_count * sizeof(D3D12_INDEX_BUFFER_VIEW)),
+				(D3D_PRIMITIVE_TOPOLOGY * const)alloca(material_count * sizeof(D3D_PRIMITIVE_TOPOLOGY)),
+				(u32 * const)alloca(material_count * sizeof(u32))
+			};
+			
+			submesh::get_views(gpu_ids, material_count, views_cache);
+			
+			std::unique_ptr<id::id_type[]> items{ std::make_unique<id::id_type[]>(sizeof(id::id_type) * (1 + (u64)material_count + 1)) };
+			
+			items[0] = geometry_content_id;
+			id::id_type* const item_ids{ &items[1] };
+			
+			std::unique_lock lock{ render_item_mutex };
+			
+			for (u32 i = 0; i < material_count; ++i)
+			{
+				
+			}
+		}
+		
+		void remove(id::id_type id)
+		{
+			
+		}
+		
+		void get_d3d12_render_item_ids(const frame_info& info, utl::vector<id::id_type>& d3d12_render_item_ids)
+		{
+			
 		}
 	}
 }
