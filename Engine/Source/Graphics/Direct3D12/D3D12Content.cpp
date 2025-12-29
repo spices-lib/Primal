@@ -36,6 +36,12 @@ namespace primal::graphics::d3d12::content {
 		std::unordered_map<u64, id::id_type>            pso_map;
 		std::mutex                                      render_item_mutex{};
 		
+		struct {
+			utl::vector<primal::content::lod_offset>    lod_offset;
+			utl::vector<id::id_type>                    geometry_ids;
+			utl::vector<f32>                            thresholds;
+		} frame_cache;
+
 		id::id_type create_root_signature(material_type::type type, shader_flags::flags flags);
 		
 		class d3d12_material_stream
@@ -259,6 +265,14 @@ namespace primal::graphics::d3d12::content {
 		
 		mtl_rs_map.clear();
 		root_signatures.clear();
+
+		for (auto& item : pipeline_states)
+		{
+			core::release(item);
+		}
+
+		pso_map.clear();
+		pipeline_states.clear();
 	}
 	
 	namespace submesh {
@@ -417,20 +431,42 @@ namespace primal::graphics::d3d12::content {
 			
 			for (u32 i = 0; i < material_count; ++i)
 			{
-				
+				d3d12_render_item item{};
+				item.entity_id = entity_id;
+				item.submesh_gpu_id = gpu_ids[i];
+				item.material_id = material_ids[i];
+
+				assert(id::is_valid(item.submesh_gpu_id) && id::is_valid(item.material_id));
+				item_ids[i] = render_items.add(item);
 			}
+
+			item_ids[material_count] = id::invalid_id;
 			
-			return id::invalid_id;
+			return render_item_ids.add(std::move(items));
 		}
 		
 		void remove(id::id_type id)
 		{
-			
+			std::unique_lock lock(render_item_mutex);
+			const id::id_type* const item_ids{ &render_item_ids[id][1] };
+
+			for (u32 i{0}; item_ids[i] != id::invalid_id; ++i)
+			{
+				render_items.remove(item_ids[i]);
+			}
+
+			render_item_ids.remove(id);
 		}
 		
 		void get_d3d12_render_item_ids(const frame_info& info, utl::vector<id::id_type>& d3d12_render_item_ids)
 		{
-			
+			assert(info.render_item_ids && info.thresholds && info.render_item_count);
+			assert(d3d12_render_item_ids.empty());
+
+			frame_cache.lod_offset.clear();
+
+
+			std::unique_lock lock(render_item_mutex);
 		}
 	}
 }
