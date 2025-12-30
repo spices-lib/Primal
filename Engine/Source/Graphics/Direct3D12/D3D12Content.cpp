@@ -9,6 +9,12 @@ namespace primal::graphics::d3d12::content {
 
 	namespace {
 	
+		struct pso_id
+		{
+			id::id_type gpass_pso_id{ id::invalid_id };
+			id::id_type depth_pso_id{ id::invalid_id };
+		};
+
 		struct submesh_view
 		{
 			D3D12_VERTEX_BUFFER_VIEW            position_buffer_view{};
@@ -248,6 +254,14 @@ namespace primal::graphics::d3d12::content {
 			NAME_D3D12_OBJECT_INDEXED(root_signature, (int)key, L"GPass Root Signature - key");
 			
 			return id;
+		}
+
+		pso_id create_pso(id::id_type material_id, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, u32 elements_type)
+		{
+			std::unique_lock lock(material_mutex);
+			const d3d12_material_stream material{ materials[material_id].get() };
+
+			constexpr u64 aligned_stream_size{ math::align_size_up<sizeof(u64)>(sizeof(d3dx::d3d12_pipeline_state_subobject_stream)) };
 		}
 	}
 
