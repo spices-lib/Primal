@@ -58,12 +58,13 @@ namespace primal::graphics::d3d12::content {
 			id::id_type* const            entity_ids;
 			id::id_type* const            submesh_gpu_ids;
 			id::id_type* const            material_ids;
-			ID3D12PipelineState* const    pso;
-			ID3D12PipelineState* const    depth_pso;
+			ID3D12PipelineState* const    psos;
+			ID3D12PipelineState* const    depth_psos;
 		};
 		
 		id::id_type add(id::id_type entity_id, id::id_type geometry_content_id, u32 material_count, const id::id_type* const material_ids);
 		void remove(id::id_type id);
 		void get_d3d12_render_item_ids(const frame_info& info, utl::vector<id::id_type>& d3d12_render_item_ids);
+		void get_items(const id::id_type* const d3d12_render_item_ids, u32 id_count, const items_cache& cache);
 	}
 }

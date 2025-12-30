@@ -31,13 +31,13 @@ namespace primal::graphics::d3d12::content {
 		std::mutex                                      material_mutex{};
 		
 		utl::free_list<render_item::d3d12_render_item>  render_items;
-		utl::free_list<render_item::d3d12_render_item>  render_item_ids;
+		utl::free_list<std::unique_ptr<id::id_type[]>>  render_item_ids;
 		utl::vector<ID3D12PipelineState*>               pipeline_states;
 		std::unordered_map<u64, id::id_type>            pso_map;
 		std::mutex                                      render_item_mutex{};
 		
 		struct {
-			utl::vector<primal::content::lod_offset>    lod_offset;
+			utl::vector<primal::content::lod_offset>    lod_offsets;
 			utl::vector<id::id_type>                    geometry_ids;
 			utl::vector<f32>                            thresholds;
 		} frame_cache;
@@ -463,10 +463,61 @@ namespace primal::graphics::d3d12::content {
 			assert(info.render_item_ids && info.thresholds && info.render_item_count);
 			assert(d3d12_render_item_ids.empty());
 
-			frame_cache.lod_offset.clear();
-
+			frame_cache.lod_offsets.clear();
+			frame_cache.geometry_ids.clear();
+			frame_cache.thresholds.clear();
+			const u32 count{ info.render_item_count };
 
 			std::unique_lock lock(render_item_mutex);
+
+			for (u32 i{ 0 }; i < count; ++i)
+			{
+				const id::id_type* const buffer{ render_item_ids[info.render_item_ids[i]].get() };
+				frame_cache.geometry_ids.emplace_back(buffer[0]);
+				frame_cache.thresholds.emplace_back(info.thresholds[i]);
+			}
+
+			primal::content::get_lod_offset(frame_cache.geometry_ids.data(), frame_cache.thresholds.data(), count, frame_cache.lod_offsets);
+			assert(frame_cache.lod_offsets.size() == count);
+
+			u32 d3d12_render_item_count{ 0 };
+			for (u32 i{ 0 }; i < count; ++i)
+			{
+				d3d12_render_item_count += frame_cache.lod_offsets[i].count;
+			}
+
+			assert(d3d12_render_item_count);
+			d3d12_render_item_ids.resize(d3d12_render_item_count);
+
+			u32 item_index{ 0 };
+			for (u32 i{ 0 }; i < count; ++i)
+			{
+				const id::id_type* const item_ids{ &render_item_ids[info.render_item_ids[i]][1] };
+				const primal::content::lod_offset& lod_offset{ frame_cache.lod_offsets[i]};
+				memcpy(&d3d12_render_item_ids[item_index], &item_ids[lod_offset.offset], sizeof(id::id_type) * lod_offset.count);
+				item_index += lod_offset.count;
+				assert(item_index < d3d12_render_item_count);
+			}
+
+			assert(item_index < d3d12_render_item_count);
+		}
+
+		void get_items(const id::id_type* const d3d12_render_item_ids, u32 id_count, const items_cache& cache)
+		{
+			assert(d3d12_render_item_ids && id_count);
+			assert(cache.entity_ids && cache.submesh_gpu_ids && cache.material_ids && cache.psos && cache.depth_psos);
+			std::unique_lock lock(render_item_mutex);
+
+			for (u32 i{ 0 }; i < id_count; ++i)
+			{
+				const d3d12_render_item& item{ render_items[d3d12_render_item_ids[i]] };
+				cache.entity_ids[i] = item.entity_id;
+				cache.submesh_gpu_ids[i] = item.submesh_gpu_id;
+				cache.material_ids[i] = item.material_id;
+				cache.psos[i] = pipeline_states[item.pso_id];
+				cache.depth_psos[i] = pipeline_states[item.depth_pso_id];
+			}
+
 		}
 	}
 }
