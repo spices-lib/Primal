@@ -44,22 +44,13 @@ namespace primal::graphics::d3d12::content {
 	
 	namespace render_item {
 		
-		struct d3d12_render_item
-		{
-			id::id_type entity_id;
-			id::id_type submesh_gpu_id;
-			id::id_type material_id;
-			id::id_type pso_id;
-			id::id_type depth_pso_id;
-		};
-		
 		struct items_cache
 		{
 			id::id_type* const            entity_ids;
 			id::id_type* const            submesh_gpu_ids;
 			id::id_type* const            material_ids;
-			ID3D12PipelineState* const    psos;
-			ID3D12PipelineState* const    depth_psos;
+			ID3D12PipelineState** const   psos;
+			ID3D12PipelineState** const   depth_psos;
 		};
 		
 		id::id_type add(id::id_type entity_id, id::id_type geometry_content_id, u32 material_count, const id::id_type* const material_ids);

@@ -24,6 +24,15 @@ namespace primal::graphics::d3d12::content {
 			u32                                 elements_type{};
 		};
 
+		struct d3d12_render_item
+		{
+			id::id_type entity_id;
+			id::id_type submesh_gpu_id;
+			id::id_type material_id;
+			id::id_type pso_id;
+			id::id_type depth_pso_id;
+		};
+
 		utl::free_list<ID3D12Resource*>                 submesh_buffers{};
 		utl::free_list<submesh_view>                    submesh_views{};
 		std::mutex                                      submesh_mutex{};
@@ -36,7 +45,7 @@ namespace primal::graphics::d3d12::content {
 		utl::free_list<std::unique_ptr<u8[]>>           materials;
 		std::mutex                                      material_mutex{};
 		
-		utl::free_list<render_item::d3d12_render_item>  render_items;
+		utl::free_list<d3d12_render_item>               render_items;
 		utl::free_list<std::unique_ptr<id::id_type[]>>  render_item_ids;
 		utl::vector<ID3D12PipelineState*>               pipeline_states;
 		std::unordered_map<u64, id::id_type>            pso_map;
@@ -45,7 +54,6 @@ namespace primal::graphics::d3d12::content {
 		struct {
 			utl::vector<primal::content::lod_offset>    lod_offsets;
 			utl::vector<id::id_type>                    geometry_ids;
-			utl::vector<f32>                            thresholds;
 		} frame_cache;
 
 		id::id_type create_root_signature(material_type::type type, shader_flags::flags flags);
@@ -157,7 +165,7 @@ namespace primal::graphics::d3d12::content {
 			shader_flags::flags    _shader_flags;
 		};
 		
-		D3D_PRIMITIVE_TOPOLOGY get_d3d_primitive_topology(primitive_topology::type type)
+		constexpr D3D_PRIMITIVE_TOPOLOGY get_d3d_primitive_topology(primitive_topology::type type)
 		{
 			using namespace primal::content;
 			assert(type < primitive_topology::count);
@@ -172,6 +180,20 @@ namespace primal::graphics::d3d12::content {
 			}
 
 			return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+		}
+
+		constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE get_d3d_primitive_topology(D3D_PRIMITIVE_TOPOLOGY topology)
+		{
+			switch (topology)
+			{
+			case D3D_PRIMITIVE_TOPOLOGY_POINTLIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+			case D3D_PRIMITIVE_TOPOLOGY_LINELIST:
+			case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+			case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
+			case D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+			}
+
+			return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 		}
 		
 		constexpr D3D12_ROOT_SIGNATURE_FLAGS get_root_signature_flags(shader_flags::flags flags)
@@ -256,12 +278,84 @@ namespace primal::graphics::d3d12::content {
 			return id;
 		}
 
+		id::id_type create_pso_if_needed(const u8* const stream_ptr, u64 aligned_stream_size, [[maybe_unused]] bool is_depth)
+		{
+			const u64 key{ math::calc_crc32_u64(stream_ptr, aligned_stream_size) };
+			auto pair = pso_map.find(key);
+
+			if (pair != pso_map.end())
+			{
+				assert(pair->first == key);
+				return pair->second;
+			}
+
+			const id::id_type id = (u32)pipeline_states.size();
+			d3dx::d3d12_pipeline_state_subobject_stream* const stream{ (d3dx::d3d12_pipeline_state_subobject_stream* const)stream_ptr };
+			pipeline_states.emplace_back(d3dx::create_pipeline_state(stream, sizeof(d3dx::d3d12_pipeline_state_subobject_stream)));
+			NAME_D3D12_OBJECT_INDEXED(pipeline_states.back(), key, is_depth ?
+				L"Depth-only Pipeline State Object - key" : L"GPass Pipeline State Object - key");
+
+			assert(id::is_valid(id));
+			pso_map[key] = id;
+			return id;
+		}
+
 		pso_id create_pso(id::id_type material_id, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, u32 elements_type)
 		{
 			std::unique_lock lock(material_mutex);
 			const d3d12_material_stream material{ materials[material_id].get() };
 
 			constexpr u64 aligned_stream_size{ math::align_size_up<sizeof(u64)>(sizeof(d3dx::d3d12_pipeline_state_subobject_stream)) };
+			u8* const stream_ptr{ (u8* const)alloca(aligned_stream_size) };
+			ZeroMemory(stream_ptr, aligned_stream_size);
+			new (stream_ptr) d3dx::d3d12_pipeline_state_subobject_stream{};
+
+			d3dx::d3d12_pipeline_state_subobject_stream& stream{ *(d3dx::d3d12_pipeline_state_subobject_stream* const)stream_ptr };
+
+			D3D12_RT_FORMAT_ARRAY rt_array{};
+			rt_array.NumRenderTargets = 1;
+			rt_array.RTFormats[0] = gpass::main_buffer_format;
+
+			stream.render_target_formats = rt_array;
+			stream.root_signature = root_signatures[material.root_signature_id()];
+			stream.primitive_topology = get_d3d_primitive_topology(primitive_topology);
+			stream.depth_stencil_format = gpass::depth_buffer_format;
+			stream.rasterizer = d3dx::rasterizer_state.backface_cull;
+			stream.depth_stencil1 = d3dx::depth_state.enabled_readonly;
+			stream.blend = d3dx::blend_state.disabled;
+
+			const shader_flags::flags flags{ material.shader_flags() };
+			D3D12_SHADER_BYTECODE shaders[shader_type::count]{};
+			u32 shader_index{ 0 };
+			for (u32 i{ 0 }; i < shader_type::count; ++i)
+			{
+				if (flags & (i << i))
+				{
+					primal::content::compiled_shader_ptr shader{ primal::content::get_shader(material.shader_ids()[shader_index]) };
+					assert(shader);
+					shaders[i].pShaderBytecode = shader->byte_code();
+					shaders[i].BytecodeLength = shader->byte_code_size();
+					++shader_index;
+				}
+			}
+
+			stream.vs = shaders[shader_type::vertex];
+			stream.ps = shaders[shader_type::pixel];
+			stream.ds = shaders[shader_type::domain];
+			stream.hs = shaders[shader_type::hull];
+			stream.gs = shaders[shader_type::geometry];
+			stream.cs = shaders[shader_type::compute];
+			stream.as = shaders[shader_type::amplification];
+			stream.ms = shaders[shader_type::mesh];
+
+			pso_id id_pair{};
+			id_pair.gpass_pso_id = create_pso_if_needed(stream_ptr, aligned_stream_size, false);
+
+			stream.ps = D3D12_SHADER_BYTECODE{};
+			stream.depth_stencil1 = d3dx::depth_state.enabled;
+			id_pair.depth_pso_id = create_pso_if_needed(stream_ptr, aligned_stream_size, true);
+
+			return id_pair;
 		}
 	}
 
@@ -449,6 +543,9 @@ namespace primal::graphics::d3d12::content {
 				item.entity_id = entity_id;
 				item.submesh_gpu_id = gpu_ids[i];
 				item.material_id = material_ids[i];
+				pso_id id_pair{ create_pso(item.material_id, views_cache.primitive_topologies[i], views_cache.elements_types[i]) };
+				item.pso_id = id_pair.gpass_pso_id;
+				item.depth_pso_id = id_pair.depth_pso_id;
 
 				assert(id::is_valid(item.submesh_gpu_id) && id::is_valid(item.material_id));
 				item_ids[i] = render_items.add(item);
@@ -479,7 +576,6 @@ namespace primal::graphics::d3d12::content {
 
 			frame_cache.lod_offsets.clear();
 			frame_cache.geometry_ids.clear();
-			frame_cache.thresholds.clear();
 			const u32 count{ info.render_item_count };
 
 			std::unique_lock lock(render_item_mutex);
@@ -488,10 +584,9 @@ namespace primal::graphics::d3d12::content {
 			{
 				const id::id_type* const buffer{ render_item_ids[info.render_item_ids[i]].get() };
 				frame_cache.geometry_ids.emplace_back(buffer[0]);
-				frame_cache.thresholds.emplace_back(info.thresholds[i]);
 			}
 
-			primal::content::get_lod_offset(frame_cache.geometry_ids.data(), frame_cache.thresholds.data(), count, frame_cache.lod_offsets);
+			primal::content::get_lod_offset(frame_cache.geometry_ids.data(), info.thresholds, count, frame_cache.lod_offsets);
 			assert(frame_cache.lod_offsets.size() == count);
 
 			u32 d3d12_render_item_count{ 0 };

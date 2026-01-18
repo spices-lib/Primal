@@ -62,6 +62,76 @@ namespace primal::graphics::d3d12 {
 		const D3D12_DESCRIPTOR_HEAP_TYPE _type{};
 	};
 
+	struct d3d12_buffer_init_info
+	{
+		ID3D12Heap1*                       heap{ nullptr };
+		const void*                        data{ nullptr };
+		D3D12_RESOURCE_ALLOCATION_INFO1    allocation_info{};
+		D3D12_RESOURCE_STATES              initial_state{};
+		D3D12_RESOURCE_FLAGS               flags{ D3D12_RESOURCE_FLAG_NONE };
+		u32                                size{ 0 };
+		u32                                stride{ 0 };
+		u32                                element_count{ 0 };
+		u32                                alignment{ 0 };
+		bool                               create_uav{ false };
+	};
+
+	class d3d12_buffer
+	{
+	public:
+
+		d3d12_buffer() = default;
+		explicit d3d12_buffer(d3d12_buffer_init_info info, bool is_cpu_accessible);
+		DISABLE_COPY(d3d12_buffer);
+		constexpr d3d12_buffer(d3d12_buffer&& o)
+			: _buffer{ o._buffer }
+			, _gpu_address{ o._gpu_address }
+			, _size{ o._size }
+		{
+			o.reset();
+		}
+
+		constexpr d3d12_buffer& operator=(d3d12_buffer&& o)
+		{
+			assert(this != &o);
+			if (this != &o)
+			{
+				release();
+				move(o);
+			}
+
+			return *this;
+		}
+
+		~d3d12_buffer() { release(); }
+
+		void release();
+
+		constexpr ID3D12Resource* const buffer() const { return _buffer; }
+		constexpr D3D12_GPU_VIRTUAL_ADDRESS gpu_address() const { return _gpu_address; };
+		constexpr u32 size() const { return _size; };
+
+	private:
+
+		constexpr void move(d3d12_buffer& o)
+		{
+			_buffer = o._buffer;
+			_gpu_address = o._gpu_address;
+			o.reset();
+		}
+
+		constexpr void reset()
+		{
+			_buffer = nullptr;
+			_gpu_address = 0;
+			_size = 0;
+		}
+
+		ID3D12Resource*             _buffer{ nullptr };
+		D3D12_GPU_VIRTUAL_ADDRESS   _gpu_address{ 0 };
+		u32                         _size{ 0 };
+	};
+
 	struct d3d12_texture_init_info
 	{
 		ID3D12Heap1*                       heap{ nullptr };

@@ -126,6 +126,11 @@ namespace primal::graphics::d3d12 {
 		handle = {};
 	}
 
+	d3d12_buffer::d3d12_buffer(d3d12_buffer_init_info info, bool is_cpu_accessible)
+	{
+
+	}
+
 	d3d12_texture::d3d12_texture(d3d12_texture_init_info info)
 	{
 		auto* const device{ core::device() };
