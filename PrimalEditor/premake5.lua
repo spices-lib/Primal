@@ -26,7 +26,6 @@ project "PrimalEditor"
 
 	links
 	{
-		"Engine"
 	}
 
 	filter "system:windows"
