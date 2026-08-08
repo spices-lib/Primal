@@ -1,21 +1,17 @@
 project "PrimalEditor"
 	kind "ConsoleApp"
-	language "C++"
-	cppdialect "C++20"
-	staticruntime "On"
+	language "C#"
+	dotnetframework "net10.0-windows"
+	wpf "On"
 
 	targetdir("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	flags { "MultiProcessorCompile" }
+	multiprocessorcompile "On"
 
 	files
 	{
-		"Source/**.h",
-		"Source/**.hpp",
-		"Source/**.cpp",
-		"Source/**.c",
-		"Source/**.cc",
+		"Source/**.cs",
 	}
 
 	defines

@@ -24,4 +24,4 @@ Library["FBX_Release_xml"]                = "%{LibraryDir.FBX}/release/libxml2-m
 Library["FBX_Release_zlib"]               = "%{LibraryDir.FBX}/release/zlib-mt.lib"
 
 Nugets                                    = {}
-Nugets["DirectX12AgilitySDK"]             = "Microsoft.Direct3D.D3D12:1.618.5"
+Nugets["DirectX12AgilitySDK"]             = "Microsoft.Direct3D.D3D12:1.619.4"

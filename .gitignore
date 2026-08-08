@@ -13,4 +13,7 @@
 
 EngineTest/shaders
 
+PrimalEditor/.vs
+PrimalEditor/obj
+
 *.log
