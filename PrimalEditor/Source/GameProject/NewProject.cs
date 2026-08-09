@@ -156,8 +156,8 @@ class NewProject : ViewModelBase
             }
             var dirInfo = new DirectoryInfo(path + @".Primal\");
             dirInfo.Attributes |= FileAttributes.Hidden;
-            File.Copy(template.IconFilePath, Path.GetFullPath(Path.Combine(dirInfo.FullName, "Icon.png")));
-            File.Copy(template.IconFilePath, Path.GetFullPath(Path.Combine(dirInfo.FullName, "Screenshot.png")));
+            File.Copy(template.IconFilePath, Path.GetFullPath(Path.Combine(dirInfo.FullName, "Icon.jpg")));
+            File.Copy(template.ScreenshotFilePath, Path.GetFullPath(Path.Combine(dirInfo.FullName, "Screenshot.jpg")));
 
             /*{
                 var project = new Project(ProjectName, path);
