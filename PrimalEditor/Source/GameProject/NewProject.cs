@@ -49,7 +49,7 @@ class NewProject : ViewModelBase
         }
     }
     
-    private string _projectPath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\PrimalProject\";
+    private string _projectPath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\PrimalProjects\";
     public string ProjectPath
     {
         get => _projectPath;
@@ -159,7 +159,17 @@ class NewProject : ViewModelBase
             File.Copy(template.IconFilePath, Path.GetFullPath(Path.Combine(dirInfo.FullName, "Icon.png")));
             File.Copy(template.IconFilePath, Path.GetFullPath(Path.Combine(dirInfo.FullName, "Screenshot.png")));
 
-            return "";
+            /*{
+                var project = new Project(ProjectName, path);
+                Serializer.ToFile(project, path + $"{ProjectName}" + Project.Extension);
+            }*/
+
+            var projectXml = File.ReadAllText(template.ProjectFilePath);
+            projectXml = string.Format(projectXml, ProjectName, ProjectPath);
+            var projectPath = Path.GetFullPath(Path.Combine(path, $"{ProjectName}{Project.Extension}"));
+            File.WriteAllText(projectPath, projectXml);
+            
+            return path;
         }
         catch (Exception e)
         {

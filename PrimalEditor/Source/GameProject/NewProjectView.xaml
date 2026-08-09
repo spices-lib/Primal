@@ -55,7 +55,13 @@
             HorizontalAlignment="Center"
             Margin="0, 30, 0, 0"
         >
-            <Button Content="Create" Width="90" IsDefault="True" IsEnabled="{Binding IsValid}"/>
+            <Button 
+                Content="Create" 
+                Width="90" 
+                IsDefault="True" 
+                IsEnabled="{Binding IsValid}"
+                Click="OnCreat_Button_Click"
+            />
             <Button Content="Exit" Width="90" Margin="30, 0, 0, 0" IsCancel="True"/>
         </StackPanel>
         <TextBlock Text="{Binding ErrorMsg}" Margin="0, 20, 0, 0" HorizontalAlignment="Center"/>
