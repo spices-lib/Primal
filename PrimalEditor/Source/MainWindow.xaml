@@ -4,8 +4,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
         xmlns:local="clr-namespace:PrimalEditor.Source"
+        xmlns:worldEditor="clr-namespace:PrimalEditor.Source.Editors.WorldEditor"
         mc:Ignorable="d"
         Title="Primal Editor"
         WindowStartupLocation="CenterScreen"
-        Height="450" Width="800">
+        Height="1080" Width="1920">
+        <Grid>
+                <worldEditor:WorldEditorView/>
+        </Grid>
 </Window>

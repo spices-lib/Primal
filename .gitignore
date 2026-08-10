@@ -6,6 +6,7 @@
 
 *.user
 *.sln
+*.slnx
 *.vcxproj
 *.csproj
 *.vcxproj.filters
